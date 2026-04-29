@@ -2,8 +2,10 @@
 .include "header.asm"
 
 .segment "ZEROPAGE"
-VAR_Padding:   .res 20
-VAR_PPUCtrl:   .res 1   ; $0014 = store the value in ppu_ctrl
+VAR_Padding:        .res 20
+VAR_PPUCtrl:        .res 1   ; $0014 = store the value in ppu_ctrl
+VAR_0015:           .res 1
+VAR_IsAfterVBlank:  .res 1   ; $0016 = informs if the NMI vblank has already finished
 
 .segment "CODE"
 .org $C000
@@ -135,7 +137,7 @@ LAB_c0b8:
     STY $006f
 LAB_c0c8:
     LDA  #$1
-    STA  $0016
+    STA  VAR_IsAfterVBlank
 
     ; restore register values from stack
     PLA
@@ -675,7 +677,7 @@ INX
 LOOP_c554:                    ;XREF[1,0]:   c570
 LDA         $0022                            ;= ??
 LDY         $0022+1
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$0
 LDA         #$2d
 LOOP_c55f:                    ;XREF[1,0]:   c563
@@ -691,7 +693,7 @@ DEX
 BPL         LOOP_c554
 LDA         #$3f
 LDY         #$0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 JSR         FUN_e96b                                ;undefined FUN_e96b()
 LDA         $002e                            ;= ??
 AND         #$f
@@ -719,14 +721,14 @@ CPY         #$18
 BCC         LOOP_PPUDATA_c598
 LDA         #$3f
 LDY         #$0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 TYA
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDX         #$1
 LOOP_c5b0:                    ;XREF[1,0]:   c5f6
 LDA         #$23
 LDY         #$c0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$0
 LOOP_c5b9:                    ;XREF[1,0]:   c5d4
 LDA         #$0
@@ -746,7 +748,7 @@ CPY         #$40
 BCC         LOOP_c5b9
 LDA         #$27
 LDY         #$c0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$55
 LDY         #$0
 LOOP_PPUDATA_c5e1:            ;XREF[1,0]:   c5f3
@@ -767,28 +769,28 @@ BPL         LOOP_c5b0
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         #$20
 LDY         #$89
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$3d
 STY         PPU_DATA
 INY
 STY         PPU_DATA
 LDA         #$20
 LDY         #$a9
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$3f
 STY         PPU_DATA
 INY
 STY         PPU_DATA
 LDA         #$20
 LDY         #$ac
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$11
 STY         PPU_DATA
 INY
 STY         PPU_DATA
 LDA         #$20
 LDY         #$4c
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$7
 LOOP_PPUDATA_c634:            ;XREF[1,0]:   c63b
 ; FWD[2,0]:   c805,c806
@@ -798,7 +800,7 @@ DEY
 BPL         LOOP_PPUDATA_c634
 LDA         #$20
 LDY         #$8f
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$4
 LOOP_PPUDATA_c646:            ;XREF[1,0]:   c64d
 ; FWD[2,0]:   c80a,c80b
@@ -809,7 +811,7 @@ BPL         LOOP_PPUDATA_c646
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         #$21
 LDY         #$c0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$1f
 LDA         #$2b
 LOOP_PPUDATA_c65d:            ;XREF[1,0]:   c661
@@ -818,7 +820,7 @@ DEY
 BPL         LOOP_PPUDATA_c65d
 LDA         #$25
 LDY         #$c0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$1f
 LDA         #$2b
 LOOP_PPUDATA_c66e:            ;XREF[1,0]:   c672
@@ -834,7 +836,7 @@ LDX         #$e
 LOOP_c681:                    ;XREF[1,0]:   c69e
 LDA         $0022                            ;= ??
 LDY         $0022+1
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 TXA
 TAY
 LDA         #$2c
@@ -859,7 +861,7 @@ STA         $0022+1
 LOOP_c6aa:                    ;XREF[1,0]:   c6c7
 LDA         $0022                            ;= ??
 LDY         $0022+1
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 TXA
 TAY
 LDA         #$2c
@@ -951,7 +953,7 @@ CPX         #$10
 BCC         LOOP_PPUADDR_c719
 LDA         #$21
 LDY         #$df
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$60
 STA         PPU_DATA
 LDA         VAR_PPUCtrl                            ;= ??
@@ -959,7 +961,7 @@ STA         PPU_CTRL
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         #$21
 LDY         #$40
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$0
 LAB_c76c:                     ;XREF[1,0]:   c774
 LDA         DAT_c849,Y                              ;= 08h
@@ -969,7 +971,7 @@ JMP         LAB_c76c
 LAB_c777:                     ;XREF[1,0]:   c76f
 LDA         #$25
 LDY         #$40
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$0
 LAB_c780:                     ;XREF[1,0]:   c788
 LDA         DAT_c878,Y                              ;= 03h
@@ -1071,7 +1073,7 @@ LAB_PPUMASK_PPUSCROLL_c906:
 ;             e7cd,ea72,eb4c,eb64
 LDA         #$20
 LDY         #$0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 STY         PPU_SCROLL
 STY         PPU_SCROLL
 LDA         #$1e
@@ -1090,7 +1092,7 @@ FUN_c91b:
 LDY         #$1
 LOOP_c91d:                    ;XREF[1,0]:   c953
 LDA         #$0
-STA         $0016                            ;= ??
+STA         VAR_IsAfterVBlank
 LDA         $0071                            ;= ??
 BEQ         LOOP_c942
 LDA         $002a                            ;= ??
@@ -1109,16 +1111,16 @@ INX
 STX         $0071                            ;= ??
 STX         $002a                            ;= ??
 JMP         FUN_c0d5                                ;undefined FUN_c0d5()
-LOOP_c942:                    ;XREF[3,0]:   c923,c935,c944
-LDA         $0016                            ;= ??
-BEQ         LOOP_c942
-LDA         $00a7                            ;= ??
+LOOP_c942:                                   ; while (!VAR_IsAfterVBlank) {
+LDA         VAR_IsAfterVBlank
+BEQ         LOOP_c942                        ; } end
+LDA         $00a7
 BNE         LOOP_c952
 LDA         $00a6                            ;= ??
 BNE         LAB_c956
 LDA         $0071                            ;= ??
 BEQ         LAB_c95d
-LOOP_c952:                    ;XREF[4,0]:   c948,c95a,c961,c9ef
+LOOP_c952:                                   ; return sub-routine
 DEY
 BNE         LOOP_c91d
 RTS
@@ -1146,7 +1148,7 @@ LDX         #$3
 LOOP_c978:                    ;XREF[1,0]:   c991
 LDA         $00a8                            ;= ??
 LDY         $00a9                            ;= ??
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$8
 LOOP_PPUDATA_c981:            ;XREF[1,0]:   c987
 LDA         #$2d
@@ -1161,7 +1163,7 @@ DEX
 BPL         LOOP_c978
 LDA         #$20
 LDY         #$77
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$4
 LOOP_PPUDATA_c99c:            ;XREF[1,0]:   c9a3
 ; FWD[2,0]:   c9f5,c9f6
@@ -1270,7 +1272,7 @@ LDA         VAR_PPUCtrl                            ;= ??
 STA         PPU_CTRL
 LDA         #$20
 LDY         #$71
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         $0078                            ;= ??
 BNE         LAB_PPUDATA_ca50
 LDA         #$2d
@@ -1282,7 +1284,7 @@ LDA         #$0
 STA         $0038                            ;= ??
 LDA         #$20
 LDY         #$ae
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$4
 LOOP_ca65:                    ;XREF[1,0]:   ca78
 ; FWD[2,0]:   0012,0013
@@ -1310,7 +1312,7 @@ LDA         DAT_cbb5,Y                              ;= CBh
 STA         $0022+1
 LDA         #$21
 LDY         #$ff
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$0
 LOOP_PPUDATA_ca9b:            ;XREF[1,0]:   caa3
 LDA         ($0022),Y                        ;= ??
@@ -1333,7 +1335,7 @@ LAB_PPUDATA_cab6:             ;XREF[1,0]:   cab2
 STA         $0017                            ;= ??
 LDA         #$20
 LDY         #$a3
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         $0017                            ;= ??
 JSR         FUN_cb64                                ;undefined FUN_cb64()
 ASL         A
@@ -1343,7 +1345,7 @@ ADC         #$42
 STA         PPU_DATA
 LDA         #$20
 LDY         #$83
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 PLA
 CLC
 ADC         #$41
@@ -1356,7 +1358,7 @@ ADC         #$42
 STA         PPU_DATA
 LDA         #$20
 LDY         #$64
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 PLA
 CLC
 ADC         #$41
@@ -1403,13 +1405,13 @@ ADC         #$4c
 TAX
 LDA         #$20
 LDY         #$6c
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 STX         PPU_DATA
 INX
 STX         PPU_DATA
 LDA         #$20
 LDY         #$8c
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 INX
 STX         PPU_DATA
 INX
@@ -1815,12 +1817,12 @@ STA         $00a7                            ;= ??
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         #$23
 LDY         #$d2
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$ff
 JSR         LAB_PPUDATA_d0fb                        ;undefined LAB_PPUDATA_d0fb()
 LDA         #$21
 LDY         #$2a
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$b
 LOOP_PPUDATA_ced5:            ;XREF[1,0]:   cedc
 ; FWD[2,0]:   cf67,cf68
@@ -1831,7 +1833,7 @@ DEY
 BPL         LOOP_PPUDATA_ced5
 LDA         #$21
 LDY         #$49
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$2d
 LDY         #$e
 LOOP_PPUDATA_cee9:            ;XREF[1,0]:   ceed
@@ -1840,7 +1842,7 @@ DEY
 BPL         LOOP_PPUDATA_cee9
 LDA         #$21
 LDY         #$68
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$f
 LDA         #$2d
 LOOP_PPUDATA_cefa:            ;XREF[1,0]:   cefe
@@ -2005,7 +2007,7 @@ BPL         LOOP_PPUADDR_d012
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         #$3f
 LDY         #$0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$f
 JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
 LDA         #$2a
@@ -2027,7 +2029,7 @@ STA         $0018                            ;= ??
 JSR         FUN_f09d                                ;undefined FUN_f09d()
 LDA         #$23
 LDY         #$c0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$3f
 LDA         #$55
 LOOP_PPUDATA_d077:            ;XREF[1,0]:   d07b
@@ -2036,14 +2038,14 @@ DEY
 BPL         LOOP_PPUDATA_d077
 LDA         #$23
 LDY         #$db
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$aa
 JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
 LDA         #$ee
 STA         PPU_DATA
 LDA         #$23
 LDY         #$e2
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$53
 STA         PPU_DATA
 LDA         #$50
@@ -2052,7 +2054,7 @@ LDA         #$5c
 STA         PPU_DATA
 LDA         #$22
 LDY         #$2a
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$a
 LOOP_PPUDATA_d0ad:            ;XREF[1,0]:   d0b4
 ; FWD[2,0]:   d0f3,d0f4
@@ -3762,7 +3764,7 @@ LDA         VAR_PPUCtrl                            ;= ??
 STA         PPU_CTRL
 LDA         #$20
 LDY         #$40
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$0
 LOOP_e634:                    ;XREF[1,0]:   e659
 LDA         DAT_e86d,Y                              ;= 0Ah
@@ -3805,7 +3807,7 @@ JSR         FUN_e812                                ;undefined FUN_e812()
 LDA         #$24
 LDY         #$60
 STY         $0017                            ;= ??
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$7f
 LOOP_PPUDATA_e682:            ;XREF[1,0]:   e698
 LDA         $0017                            ;= ??
@@ -3824,7 +3826,7 @@ DEY
 BPL         LOOP_PPUDATA_e682
 LDA         #$23
 LDY         #$c0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$0
 LOOP_e6a3:                    ;XREF[1,0]:   e6b1
 LDA         DAT_e90e,Y
@@ -3838,7 +3840,7 @@ CPY         #$8
 BCC         LOOP_e6a3
 LDA         #$27
 LDY         #$c0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$0
 TYA
 LOOP_PPUDATA_e6bd:            ;XREF[1,0]:   e6c3
@@ -3849,7 +3851,7 @@ BCC         LOOP_PPUDATA_e6bd
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         #$3f
 LDY         #$0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LOOP_PPUDATA_e6cf:            ;XREF[1,0]:   e6d8
 LDA         DAT_e916,Y                              ;= 0Fh
 STA         PPU_DATA
@@ -3858,12 +3860,12 @@ CPY         #$20
 BCC         LOOP_PPUDATA_e6cf
 LDA         #$3f
 LDY         #$0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 TYA
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$23
 LDY         #$49
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$d
 LOOP_PPUDATA_e6ee:            ;XREF[1,0]:   e6f5
 ; FWD[2,0]:   e942,e943
@@ -3874,7 +3876,7 @@ DEY
 BPL         LOOP_PPUDATA_e6ee
 LDA         #$22
 LDY         #$eb
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$3
 LOOP_PPUCTRL_PPUMASK_PPUSCR:   ;e707
 ; FWD[2,0]:   e952,e953
@@ -3901,7 +3903,7 @@ STA         $0203                            ;= ??
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         #$20
 LDY         #$0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 STY         PPU_SCROLL
 STY         PPU_SCROLL
 LDA         #$91
@@ -4018,7 +4020,7 @@ JMP         FUN_c0d5                                ;undefined FUN_c0d5()
 ;************************************************************************************************
 FUN_e812:
 ;XREF[3,0]:   e664,e66c,e674
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$b
 LOOP_PPUDATA_e817:            ;XREF[1,0]:   e81e
 ; FWD[2,0]:   e94e,e94f
@@ -4038,7 +4040,7 @@ LDA         #$0
 STA         $0038                            ;= ??
 LDA         #$22
 LDY         #$ef
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         $0033                            ;= ??
 LDA         DAT_cf69,Y
 CLC
@@ -4065,7 +4067,7 @@ LDA         #$0
 STA         PPU_DATA
 LDA         #$3f
 LDY         #$8
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$f
 JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
 LDY         $0033                            ;= ??
@@ -4107,15 +4109,8 @@ RTS
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
+; Function responsible to send data to PPU_ADDR using register A and Y as parameters
 LAB_PPUADDR_e964:
-;XREF[59,0]:  c558,c576,c5a7,c5ab,c5b4,c5da,c5ff,c60f
-;             c61f,c62f,c641,c656,c667,c685,c6ae,c753
-;             c767,c77b,c90a,c97c,c997,ca47,ca60,ca96
-;             cabc,cad0,cae9,cb3f,cb4d,cec4,ced0,cee2
-;             cef3,d03b,d070,d081,d092,d0a8,e62f,e67d
-;             e69e,e6b7,e6cc,e6de,e6e2,e6e9,e6fb,e72e
-;             e812,e82c,e85c,ea2a,ea5e,ea6a,eb2e,eb44
-;             f0af,f381,f393
 STA         PPU_ADDR
 STY         PPU_ADDR
 RTS
@@ -4238,7 +4233,7 @@ STY         $0053                            ;= ??
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         #$21
 LDY         #$2d
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 TYA
 JSR         LAB_PPUDATA_d0f5                        ;undefined LAB_PPUDATA_d0f5()
 LDA         #$21
@@ -4267,12 +4262,12 @@ DEY
 BPL         LOOP_PPUADDR_ea3b
 LDA         #$21
 LDY         #$4c
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$2d
 STA         PPU_DATA
 LDA         #$23
 LDY         #$d3
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$ff
 JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
 JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
@@ -4359,7 +4354,7 @@ DEY
 BPL         LOOP_PPUADDR_eb0c
 LDA         #$21
 LDY         #$4c
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$5f
 STA         PPU_DATA
 LDY         #$6
@@ -4370,7 +4365,7 @@ DEY
 BPL         LOOP_PPUDATA_eb38
 LDA         #$23
 LDY         #$d3
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$55
 JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
 JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
@@ -4655,7 +4650,7 @@ LDX         #$3
 LOOP_f0ab:                    ;XREF[1,0]:   f0d1
 LDA         $0017                            ;= ??
 LDY         $0018                            ;= ??
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$0
 LOOP_PPUDATA_f0b4:            ;XREF[1,0]:   f0bc
 LDA         ($0022),Y                        ;= ??
@@ -4743,7 +4738,7 @@ LDA         VAR_PPUCtrl                     ;= ??
 STA         PPU_CTRL
 LDA         #$20
 LDY         #$0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$2d
 LOOP_f386:                    ;XREF[1,0]:   f38a
 JSR         LAB_PPUDATA_d0fb                        ;undefined LAB_PPUDATA_d0fb()
@@ -4752,7 +4747,7 @@ BNE         LOOP_f386
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         #$24
 LDY         #$0
-JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
+JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$2d
 LOOP_f398:                    ;XREF[1,0]:   f39c
 JSR         LAB_PPUDATA_d0fb                        ;undefined LAB_PPUDATA_d0fb()
