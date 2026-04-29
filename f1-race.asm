@@ -1,14 +1,20 @@
 .include "consts.asm"
 .include "header.asm"
 
+.segment "ZEROPAGE"
+VAR_Padding:   .res 20
+VAR_PPUCtrl:   .res 1   ; $0014 = store the value in ppu_ctrl
+
 .segment "CODE"
+.org $C000
+
 Reset:
     LDA PPU_STATUS
     BPL Reset
     SEI
     CLD
     LDX #$ff
-    TXS
+    TXS             ; initialize the stack pointer at position $FF
 
     LDA #0
     LDX #$14
@@ -21,15 +27,15 @@ ClearZeroPage:
     STA PPU_MASK
     LDA #$1e
     STA $0015
-    LDA #$90
+    LDA #%10010000        ; enable NMI, pattern table 1 should be used as background
     STA PPU_CTRL
-    STA $0014
+    STA VAR_PPUCtrl
     LDX #$f
 
 LOOP_c023:
     LDA $600,x
-    CMP $ff9b,x
-    BNE LAB_c030
+    CMP LAB_ff9b,x
+    BNE LAB_c030        ; if ($600 == LAB_ffb) {
 
     DEX
     BPL LOOP_c023
@@ -49,7 +55,7 @@ LAB_c041:
     JSR LAB_APU_MASTERCTRL_REG_f46e
     LDX #$5e
 LOOP_c046:
-    LDA $ff9b,x
+    LDA LAB_ff9b,x
     STA $600,x
     DEX
     BPL LOOP_c046
@@ -61,7 +67,7 @@ LOOP_c053:
     INY
     BEQ LAB_c063
     TYA
-    CMP $fcfe,x
+    CMP DAT_fcfe,x
     BCC LOOP_c053
     DEX
     BPL LOOP_c053
@@ -72,11 +78,13 @@ LAB_c063:
 ;************************************************************************************************
 vblank:
 NMI:
+    ; backup register data into stack
     PHA
     TXA
     PHA
     TYA
     PHA
+
     LDA #$0
     STA OAM_ADDR
     LDA $004f
@@ -128,6 +136,8 @@ LAB_c0b8:
 LAB_c0c8:
     LDA  #$1
     STA  $0016
+
+    ; restore register values from stack
     PLA
     TAY
     PLA
@@ -329,7 +339,7 @@ LAB_PPUCTRL_PPUSCROLL_c208:
     STA PPU_SCROLL
     LDA #$0
     STA PPU_SCROLL
-    ADC $0014
+    ADC VAR_PPUCtrl
     STA PPU_CTRL
     LDA $0034
     BNE LAB_c220
@@ -866,7 +876,7 @@ DEC         $0022                            ;= ??
 LAB_PPUCTRL_c6c6:             ;XREF[1,0]:   c6c2
 DEX
 BPL         LOOP_c6aa
-LDA         $0014                            ;= ??
+LDA         VAR_PPUCtrl                            ;= ??
 ORA         #$4
 STA         PPU_CTRL
 LDA         #$21
@@ -944,7 +954,7 @@ LDY         #$df
 JSR         LAB_PPUADDR_e964                        ;undefined LAB_PPUADDR_e964()
 LDA         #$60
 STA         PPU_DATA
-LDA         $0014                            ;= ??
+LDA         VAR_PPUCtrl                            ;= ??
 STA         PPU_CTRL
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         #$21
@@ -1244,7 +1254,7 @@ ROL         A
 STA         PPU_SCROLL
 LDA         #$0
 STA         PPU_SCROLL
-ADC         $0014                            ;= ??
+ADC         VAR_PPUCtrl                            ;= ??
 STA         PPU_CTRL
 JMP         FUN_ff14                                ;undefined FUN_ff14()
 ;************************************************************************************************
@@ -1256,7 +1266,7 @@ LAB_PPUCTRL_ca38:
 LDA         $004f                            ;= ??
 AND         #$1
 BNE         LAB_PPUCTRL_caa6
-LDA         $0014                            ;= ??
+LDA         VAR_PPUCtrl                            ;= ??
 STA         PPU_CTRL
 LDA         #$20
 LDY         #$71
@@ -1290,7 +1300,7 @@ DEY
 BPL         LOOP_ca65
 LDA         #$0
 STA         PPU_DATA
-LDA         $0014                            ;= ??
+LDA         VAR_PPUCtrl                            ;= ??
 ORA         #$4
 STA         PPU_CTRL
 LDY         $0048                            ;= ??
@@ -1310,7 +1320,7 @@ CPY         #$f
 BCC         LOOP_PPUDATA_ca9b
 RTS
 LAB_PPUCTRL_caa6:             ;XREF[1,0]:   ca3c
-LDA         $0014                            ;= ??
+LDA         VAR_PPUCtrl                            ;= ??
 STA         PPU_CTRL
 LDA         $0053                            ;= ??
 LSR         A
@@ -1371,7 +1381,7 @@ LAB_PPUCTRL_PPUDATA_cb0f:     ;XREF[1,0]:   cb0b
 STA         PPU_DATA
 DEY
 BPL         LOOP_cb03
-LDA         $0014                            ;= ??
+LDA         VAR_PPUCtrl                            ;= ??
 ORA         #$4
 STA         PPU_CTRL
 LDA         #$0
@@ -1383,7 +1393,7 @@ JSR         LAB_PPUADDR_cb6b                        ;undefined LAB_PPUADDR_cb6b(
 INC         $0039                            ;= ??
 INX
 JSR         LAB_PPUADDR_cb6b                        ;undefined LAB_PPUADDR_cb6b()
-LDA         $0014                            ;= ??
+LDA         VAR_PPUCtrl                            ;= ??
 STA         PPU_CTRL
 LDA         $0047                            ;= ??
 ASL         A
@@ -3748,7 +3758,7 @@ LDA         #$ff
 JSR         FUN_f48e                                ;undefined FUN_f48e()
 JSR         LAB_JOYPAD_PORT2_f505                   ;undefined LAB_JOYPAD_PORT2_f505()
 JSR         FUN_c91b                                ;undefined FUN_c91b()
-LDA         $0014                            ;= ??
+LDA         VAR_PPUCtrl                            ;= ??
 STA         PPU_CTRL
 LDA         #$20
 LDY         #$40
@@ -3919,7 +3929,7 @@ BPL         LOOP_PPUCTRL_PPUSCROLL_e75d
 LDA         $0018                            ;= ??
 STA         PPU_SCROLL
 STA         PPU_SCROLL
-LDA         $0014                            ;= ??
+LDA         VAR_PPUCtrl                            ;= ??
 STA         PPU_CTRL
 LDX         #$4
 LOOP_PPUSCROLL_e772:          ;XREF[1,0]:   e776
@@ -3943,7 +3953,7 @@ BEQ         LAB_PPUCTRL_PPUSCROLL_e797
 JMP         LAB_PPUCTRL_PPUSCROLL_e748
 LAB_PPUCTRL_PPUSCROLL_e797:   ;XREF[1,0]:   e792
 JSR         FUN_c91b                                ;undefined FUN_c91b()
-LDA         $0014                            ;= ??
+LDA         VAR_PPUCtrl                            ;= ??
 STA         PPU_CTRL
 LDA         #$0
 STA         PPU_SCROLL
@@ -4323,7 +4333,7 @@ JSR         FUN_eb5c                                ;undefined FUN_eb5c()
 LDA         $0053                            ;= ??
 STA         $007a                            ;= ??
 JSR         FUN_c91b                                ;undefined FUN_c91b()
-LDA         $0014                            ;= ??
+LDA         VAR_PPUCtrl                            ;= ??
 STA         PPU_CTRL
 LDA         #$21
 STA         $0022                            ;= ??
@@ -4729,7 +4739,7 @@ JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         #$0
 STA         $0015                            ;= ??
 STA         PPU_MASK
-LDA         $0014                            ;= ??
+LDA         VAR_PPUCtrl                     ;= ??
 STA         PPU_CTRL
 LDA         #$20
 LDY         #$0
@@ -4888,11 +4898,10 @@ DEX
 STX         $00b8                            ;= ??
 STX         $00bd                            ;= ??
 STX         $00c2                            ;= ??
-LDX         #$f
+LDX         #%00001111          ; Enable Pulse 1 and 2, Triangle and Noise channels.
 STX         APU_MASTER_CTRL
 LDA         #$ff
 LOOP_f483:                    ;XREF[1,0]:   f487
-; FWD[2,0]:   01ce,01cf
 STA         $1c0,X
 DEX
 BPL         LOOP_f483
@@ -5379,7 +5388,9 @@ DAT_fce3:                     ;XREF[1,0]:   fb15
 DAT_fcec:                     ;XREF[2,0]:   fb3e,fb52
 .byte $7A
 DAT_fced:                     ;XREF[1,0]:   fb42
-.byte $78,$76,$75,$73,$71,$70,$6E,$6D,$6B,$69,$68,$66,$65,$63,$62,$61,$5F,$FF,$8C,$5C,$40,$2C,$1D,$10
+.byte $78,$76,$75,$73,$71,$70,$6E,$6D,$6B,$69,$68,$66,$65,$63,$62,$61,$5F
+DAT_fcfe:
+.byte $FF,$8C,$5C,$40,$2C,$1D,$10
 DAT_fd05:                     ;XREF[1,0]:   c05b
 .byte $05
 DAT_fd06:                     ;XREF[1,0]:   fbaf
@@ -5574,6 +5585,7 @@ NOP
 CPX         #$80
 BCC         LOOP_ff8e
 RTS
+LAB_ff9b:
 .byte $A5,$17,$18,$65,$4C,$85,$17,$A5,$18,$65,$4D,$85,$18,$18
 DAT_ffa9:                     ;XREF[1,0]:   c026
 .byte $69
@@ -5582,6 +5594,7 @@ DAT_ffaa:                     ;XREF[1,0]:   c026
 DAT_fff8:                     ;XREF[1,0]:   c046
 .byte $E8
 DAT_fff9:                     ;XREF[1,0]:   c046
+.byte $60
 
 .segment "CHARS"
 .incbin "f1-race.chr"
