@@ -11,6 +11,23 @@ PPU_ADDR    = $2006
 PPU_DATA    = $2007
 PPU_OAM_DMA = $4014
 
+APU_DELTA_REG = $4011
+APU_MASTER_CTRL = $4015
+APU_SND_SQUARE1 = $4000
+APU_SND_SQUARE1_1 = $4001
+APU_SND_SQUARE1_2 = $4002
+APU_SND_SQUARE1_3 = $4003
+APU_SND_SQUARE2 = $4004
+APU_SND_SQUARE2_5 = $4005
+APU_SND_SQUARE2_6 = $4006
+APU_SND_SQUARE2_7 = $4007
+APU_SND_NOISE = $400C
+APU_SND_NOISE_FREQUENCY_2        = $400E
+APU_SND_NOISE_FREQUENCY_AND_TIME_3 = $400F
+APU_SND_TRIANGLE = $4008
+APU_SND_TRIANGLE_A = $400A
+APU_SND_TRIANGLE_B = $400B
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Controller ports and buttons
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
