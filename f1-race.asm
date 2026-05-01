@@ -6,6 +6,7 @@ VAR_Padding:        .res 20
 VAR_PPUCtrl:        .res 1   ; $0014 = store the value in ppu_ctrl
 VAR_0015:           .res 1
 VAR_IsAfterVBlank:  .res 1   ; $0016 = informs if the NMI vblank has already finished
+VAR_MultiUseFlag:   .res 1   ; $0017 = identify the position of level cursor select on menu
 
 .segment "CODE"
 .org $C000
@@ -444,14 +445,14 @@ LAB_c2af:                     ;XREF[3,0]:   c23c,c276,c27a
     STA $0052
 LAB_c2ca:                     ;XREF[2,0]:   c2b1,c2c0
     LDA $0050
-    STA $0017
+    STA VAR_MultiUseFlag
     STA $0019
     LDA $0051
     STA $001a
     ASL A
-    ROL $0017
+    ROL VAR_MultiUseFlag
     ASL A
-    ROL $0017
+    ROL VAR_MultiUseFlag
     STA $0018
     LDA $0056
     BEQ LAB_c2e3
@@ -526,7 +527,7 @@ CLC
 ADC         $0018                            ;= ??
 STA         $004e                            ;= ??
 LDA         $004c                            ;= ??
-ADC         $0017                            ;= ??
+ADC         VAR_MultiUseFlag                            ;= ??
 STA         $004c                            ;= ??
 LDA         $004d                            ;= ??
 ADC         #$0
@@ -538,7 +539,7 @@ SEC
 SBC         $0018                            ;= ??
 STA         $004e                            ;= ??
 LDA         $004c                            ;= ??
-SBC         $0017                            ;= ??
+SBC         VAR_MultiUseFlag                            ;= ??
 STA         $004c                            ;= ??
 LDA         $004d                            ;= ??
 SBC         #$0
@@ -568,7 +569,7 @@ EOR         #$ff
 CLC
 ADC         #$1
 LAB_c3a2:                     ;XREF[1,0]:   c39b
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         $0050                            ;= ??
 LSR         A
 LDA         $0051                            ;= ??
@@ -583,7 +584,7 @@ STA         $001a                            ;= ??
 STA         $001b                            ;= ??
 LDX         #$5
 LOOP_c3b9:                    ;XREF[1,0]:   c3cf
-LSR         $0017                            ;= ??
+LSR         VAR_MultiUseFlag                            ;= ??
 BCC         LAB_c3ca
 LDA         $001a                            ;= ??
 CLC
@@ -681,7 +682,7 @@ JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$0
 LDA         #$2d
 LOOP_c55f:                    ;XREF[1,0]:   c563
-JSR         LAB_PPUDATA_d0fb                        ;undefined LAB_PPUDATA_d0fb()
+JSR         LAB_PPUDATA_d0fb        ; Set PPU_DATA using registers A
 INY
 BNE         LOOP_c55f
 JSR         FUN_c91b                                ;undefined FUN_c91b()
@@ -890,7 +891,7 @@ LDX         #$0
 LOOP_PPUADDR_c6dc:            ;XREF[1,0]:   c70b
 STX         $0018                            ;= ??
 LDA         DAT_c80c,X                              ;= 02h
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         $0022                            ;= ??
 STA         PPU_ADDR
 LDA         $0022+1
@@ -901,7 +902,7 @@ LDA         DAT_c81c,Y                              ;= A0h
 STA         PPU_DATA
 INY
 INX
-CPX         $0017                            ;= ??
+CPX         VAR_MultiUseFlag                            ;= ??
 BCC         LOOP_PPUDATA_c6ef
 LDA         $0022+1
 CLC
@@ -923,7 +924,7 @@ LDX         #$0
 LOOP_PPUADDR_c719:            ;XREF[1,0]:   c74d
 STX         $0018                            ;= ??
 LDA         DAT_c80c,X                              ;= 02h
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         $0022                            ;= ??
 STA         PPU_ADDR
 LDA         $0022+1
@@ -938,7 +939,7 @@ LAB_PPUDATA_c734:             ;XREF[1,0]:   c72f
 STA         PPU_DATA
 INY
 INX
-CPX         $0017                            ;= ??
+CPX         VAR_MultiUseFlag                            ;= ??
 BCC         LOOP_c72c
 LDA         $0022+1
 CLC
@@ -1100,9 +1101,9 @@ BNE         LAB_c933
 LDA         $006b                            ;= ??
 BEQ         LAB_c933
 LDX         #$ff
-TXS
-JMP         LAB_PPUCTRL_e60a                        ;undefined LAB_PPUCTRL_e60a()
-LAB_c933:                     ;XREF[2,0]:   c927,c92b
+TXS                                          ; reset stack
+JMP         LAB_PPUCTRL_e60a                 ;undefined LAB_PPUCTRL_e60a() return to main_loop?
+LAB_c933:
 LDA         $006c                            ;= ??
 BEQ         LOOP_c942
 LDX         #$ff
@@ -1332,11 +1333,11 @@ CMP         #$10
 BCC         LAB_PPUDATA_cab6
 LDA         #$10
 LAB_PPUDATA_cab6:             ;XREF[1,0]:   cab2
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         #$20
 LDY         #$a3
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 JSR         FUN_cb64                                ;undefined FUN_cb64()
 ASL         A
 PHA
@@ -1422,13 +1423,13 @@ RTS
 ;************************************************************************************************
 FUN_cb59:
 ;XREF[3,0]:   cada,caf5,cb03
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 SEC
 SBC         #$2
 BPL         LAB_cb62
 LDA         #$0
 LAB_cb62:                     ;XREF[1,0]:   cb5e
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
@@ -1506,15 +1507,15 @@ BNE         LAB_cc93
 JMP         LAB_cd72
 LAB_cc93:                     ;XREF[2,0]:   cc8a,cc8e
 LDA         $0050                            ;= ??
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         $0051                            ;= ??
 ASL         A
-ROL         $0017                            ;= ??
+ROL         VAR_MultiUseFlag                            ;= ??
 CLC
 ADC         $0041                            ;= ??
 STA         $0041                            ;= ??
 LDA         $0042                            ;= ??
-ADC         $0017                            ;= ??
+ADC         VAR_MultiUseFlag                            ;= ??
 STA         $0042                            ;= ??
 SEC
 SBC         $0045                            ;= ??
@@ -1593,18 +1594,18 @@ BCS         LAB_cd72
 LAB_cd31:                     ;XREF[1,0]:   cd2b
 LDY         $002d                            ;= ??
 LDA         DAT_f074,Y                              ;= 05h
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         DAT_f07e,Y                              ;= 03h
 STA         $0018                            ;= ??
 LDA         $005e                            ;= ??
 ASL         A
 ASL         A
 STA         $0019                            ;= ??
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 SEC
 SBC         $0019                            ;= ??
 LAB_cd48:                     ;XREF[1,0]:   cd51
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 BPL         LAB_cd54
 DEC         $0018                            ;= ??
 CLC
@@ -1614,12 +1615,12 @@ LAB_cd54:                     ;XREF[1,0]:   cd4a
 LDA         $0018                            ;= ??
 BPL         LAB_cd5e
 LDA         #$0
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 STA         $0018                            ;= ??
 LAB_cd5e:                     ;XREF[1,0]:   cd56
 LDA         $0077                            ;= ??
 CLC
-ADC         $0017                            ;= ??
+ADC         VAR_MultiUseFlag                            ;= ??
 CMP         #$a
 BCC         LAB_cd6a
 SBC         #$a
@@ -1638,7 +1639,7 @@ STA         $001b                            ;= ??
 LDA         #$14
 STA         $001c                            ;= ??
 LDA         #$80
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         $003c                            ;= ??
 STA         $003e                            ;= ??
 LDA         $003c+1
@@ -1650,10 +1651,10 @@ LOOP_cd92:                    ;XREF[1,0]:   cdf7
 LDA         $0018                            ;= ??
 ; FWD[2,0]:   057e,057f
 STA         $500,X
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 CLC
 ADC         $0019                            ;= ??
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         $0018                            ;= ??
 ADC         $001a                            ;= ??
 STA         $0018                            ;= ??
@@ -1711,10 +1712,10 @@ BPL         LOOP_cd92
 LDA         $005f                            ;= ??
 BEQ         LAB_ce33
 LDY         #$0
-STY         $0017                            ;= ??
+STY         VAR_MultiUseFlag                            ;= ??
 LDA         ($003c),Y                        ;= ??
 BPL         LAB_ce0c
-INC         $0017                            ;= ??
+INC         VAR_MultiUseFlag                            ;= ??
 EOR         #$ff
 CLC
 ADC         #$1
@@ -1723,7 +1724,7 @@ STA         $009f                            ;= ??
 LDA         #$20
 STA         $00a1                            ;= ??
 JSR         FUN_e997                                ;undefined FUN_e997()
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 BEQ         LAB_ce26
 LDA         #$0
 SEC
@@ -1819,7 +1820,7 @@ LDA         #$23
 LDY         #$d2
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$ff
-JSR         LAB_PPUDATA_d0fb                        ;undefined LAB_PPUDATA_d0fb()
+JSR         LAB_PPUDATA_d0fb        ; Set PPU_DATA using registers A
 LDA         #$21
 LDY         #$2a
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
@@ -2023,7 +2024,7 @@ STA         PPU_DATA
 LDA         #$2c
 STA         PPU_DATA
 LDA         #$21
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         #$8c
 STA         $0018                            ;= ??
 JSR         FUN_f09d                                ;undefined FUN_f09d()
@@ -2106,8 +2107,9 @@ STA         PPU_DATA
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
+; Set the value of a register inside the PPU_DATA
+; Todo: This function could be a macro
 LAB_PPUDATA_d0fb:
-;XREF[4,0]:   c55f,cec9,f386,f398
 STA         PPU_DATA
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
@@ -2179,7 +2181,7 @@ STA         $0062                            ;= ??
 STA         $0063                            ;= ??
 TAX
 LDA         $0050                            ;= ??
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         $0051                            ;= ??
 STA         $0018                            ;= ??
 LAB_d162:                     ;XREF[2,0]:   d175,d18a
@@ -2187,9 +2189,9 @@ LDA         $0018                            ;= ??
 SEC
 SBC         DAT_d115,X                              ;= 64h    d
 STA         $0018                            ;= ??
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 SBC         DAT_d118,X
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 BCC         LAB_d178
 INC         $61,X
 JMP         LAB_d162
@@ -2198,9 +2200,9 @@ LDA         $0018                            ;= ??
 CLC
 ADC         DAT_d115,X                              ;= 64h    d
 STA         $0018                            ;= ??
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 ADC         DAT_d118,X
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 INX
 CPX         #$3
 BCC         LAB_d162
@@ -2253,10 +2255,10 @@ LDY         $0047                            ;= ??
 BEQ         LAB_d1de
 LDA         #$3
 LAB_d1de:                     ;XREF[1,0]:   d1da
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         $0051                            ;= ??
 CLC
-ADC         $0017                            ;= ??
+ADC         VAR_MultiUseFlag                            ;= ??
 STA         $0051                            ;= ??
 LDA         $0050                            ;= ??
 ADC         #$0
@@ -2334,14 +2336,14 @@ LDY         $00a5                            ;= ??
 LDA         $0047                            ;= ??
 BNE         LAB_d27c
 LDA         DAT_c47d,Y
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         DAT_c43d,Y                              ;= 02h
 SEC
 SBC         DAT_c41d,Y                              ;= 01h
 JMP         LAB_d287
 LAB_d27c:                     ;XREF[1,0]:   d26b
 LDA         DAT_c4fd,Y                              ;= 20h
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         DAT_c4bd,Y                              ;= 01h
 SEC
 SBC         #$1
@@ -2349,7 +2351,7 @@ LAB_d287:                     ;XREF[1,0]:   d279
 STA         $0018                            ;= ??
 LDA         $0052                            ;= ??
 SEC
-SBC         $0017                            ;= ??
+SBC         VAR_MultiUseFlag                            ;= ??
 STA         $0052                            ;= ??
 LDA         $0051                            ;= ??
 SBC         $0018                            ;= ??
@@ -2427,7 +2429,7 @@ STA         $0022                            ;= ??
 LDA         DAT_da1d,Y                              ;= DAh
 STA         $0022+1
 LDA         DAT_da27,Y                              ;= 30h    0
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         DAT_da31,Y                              ;= 48h    H
 STA         $0018                            ;= ??
 LDA         DAT_da3b,Y                              ;= 3Ch    <
@@ -2512,7 +2514,7 @@ STA         $200,X
 STA         $300,X
 INX
 INY
-CPY         $0017                            ;= ??
+CPY         VAR_MultiUseFlag                            ;= ??
 BCC         LOOP_d37d
 STX         $002b                            ;= ??
 LOOP_d3b1:                    ;XREF[1,0]:   d3d5
@@ -2625,7 +2627,7 @@ CPY         #$54
 BCC         LAB_d462
 LDA         #$4
 LAB_d462:                     ;XREF[3,0]:   d452,d458,d45e
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDY         #$0
 LOOP_d466:                    ;XREF[1,0]:   d4be
 LDA         ($0022),Y                        ;= ??
@@ -2675,13 +2677,13 @@ STA         $2fd,X
 LAB_d4ba:                     ;XREF[1,0]:   d4b0
 INX
 INY
-CPY         $0017                            ;= ??
+CPY         VAR_MultiUseFlag                            ;= ??
 BCC         LOOP_d466
 LAB_d4c0:                     ;XREF[1,0]:   d42d
 LDA         $001c                            ;= ??
 CMP         #$8
 BNE         LAB_d4ca
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 BNE         LAB_d4cd
 LAB_d4ca:                     ;XREF[1,0]:   d4c4
 JMP         LAB_d5f7
@@ -2774,7 +2776,7 @@ INX
 INY
 CPY         $0018                            ;= ??
 BCC         LOOP_d519
-LDY         $0017                            ;= ??
+LDY         VAR_MultiUseFlag                            ;= ??
 STX         $002b                            ;= ??
 LOOP_d565:                    ;XREF[1,0]:   d5ab
 LDA         ($0022),Y                        ;= ??
@@ -2880,7 +2882,7 @@ STA         $0022                            ;= ??
 LDA         DAT_da1d,Y                              ;= DAh
 STA         $0022+1
 LDA         DAT_da31,Y                              ;= 48h    H
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         DAT_da3b,Y                              ;= 3Ch    <
 STA         $001a                            ;= ??
 LDA         DAT_da27,Y                              ;= 30h    0
@@ -2939,7 +2941,7 @@ ADC         #$80
 STA         $200,X
 INX
 INY
-CPY         $0017                            ;= ??
+CPY         VAR_MultiUseFlag                            ;= ??
 BCC         LOOP_d64d
 LAB_d673:                     ;XREF[1,0]:   d607
 STX         $002b                            ;= ??
@@ -2949,12 +2951,12 @@ ADC         $0060                            ;= ??
 STA         $0046                            ;= ??
 LDY         #$1
 LDA         ($0066),Y                        ;= ??
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 CMP         $0046                            ;= ??
 BCS         LAB_d6a6
 LDA         $0046                            ;= ??
 SEC
-SBC         $0017                            ;= ??
+SBC         VAR_MultiUseFlag                            ;= ??
 STA         $0046                            ;= ??
 LDA         $0066                            ;= ??
 CLC
@@ -3007,7 +3009,7 @@ LOOP_d6dc:                    ;XREF[1,0]:   d712
 INC         $006a                            ;= ??
 LDY         #$1
 LDA         ($0068),Y                        ;= ??
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 CMP         $006a                            ;= ??
 BCS         LAB_d711
 JSR         FUN_d722                                ;undefined FUN_d722()
@@ -3015,7 +3017,7 @@ LDA         $002b                            ;= ??
 BPL         LAB_d721
 LDA         $006a                            ;= ??
 SEC
-SBC         $0017                            ;= ??
+SBC         VAR_MultiUseFlag                            ;= ??
 STA         $006a                            ;= ??
 LDA         $0068                            ;= ??
 CLC
@@ -3746,7 +3748,7 @@ DAT_e569:                     ;XREF[2,0]:   d744,e336
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
-;XREF[4,0]:   c063,c930,cf52,cf5a
+; Menu entrypoint, called every time need to intialize the menu
 LAB_PPUCTRL_e60a:
 LDA         #$1
 STA         $002a                            ;= ??
@@ -3766,21 +3768,24 @@ LDA         #$20
 LDY         #$40
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$0
-LOOP_e634:                    ;XREF[1,0]:   e659
-LDA         DAT_e86d,Y                              ;= 0Ah
+
+; This is the loop to draw the menu Logo.
+; The data is enconded see the commentary in data Label for more details
+LOOP_e634:
+LDA         DAT_e86d,Y
 BEQ         LAB_e65b
 CMP         #$20
-BCS         LAB_PPUDATA_e655
+BCS         LAB_PPUDATA_e655                        ; if (A > DAT_e86d,y) add A to PPU_DATA, if not add it
 AND         #$f
 TAX
 LDA         DAT_e86d,Y                              ;= 0Ah
 AND         #$10
 BNE         LAB_e64b
 LDA         #$2d
-BNE         LOOP_PPUDATA_e64d
+BNE         LOOP_PPUDATA_e64d                       ; unused, since last command will always have 2D, Change to simple JMP
 LAB_e64b:                     ;XREF[1,0]:   e645
 LDA         #$2e
-LOOP_PPUDATA_e64d:            ;XREF[2,0]:   e649,e651
+LOOP_PPUDATA_e64d:
 STA         PPU_DATA
 DEX
 BPL         LOOP_PPUDATA_e64d
@@ -3790,40 +3795,46 @@ STA         PPU_DATA
 LAB_e658:                     ;XREF[1,0]:   e653
 INY
 BNE         LOOP_e634
-LAB_e65b:                     ;XREF[1,0]:   e637
+
+; Draw skill level text on menu screen
+LAB_e65b:
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         #$22
 LDY         #$a
-LDX         #$1
-JSR         FUN_e812                                ;undefined FUN_e812()
+LDX         #$1             ; Level 1
+JSR         FUN_e812        ; Draw skill level text, A,Y (PPU_ADDR) and X level number
 LDA         #$22
 LDY         #$4a
-INX
-JSR         FUN_e812                                ;undefined FUN_e812()
+INX                         ; Level 2
+JSR         FUN_e812        ; Draw skill level text, A,Y (PPU_ADDR) and X level number
 LDA         #$22
 LDY         #$8a
-INX
-JSR         FUN_e812                                ;undefined FUN_e812()
+INX                         ; Level 3
+JSR         FUN_e812        ; Draw skill level text, A,Y (PPU_ADDR) and X level number
+
+; Draw a squared flag in the NameTable2 with tiles 2D and 2F
 LDA         #$24
 LDY         #$60
-STY         $0017                            ;= ??
+STY         VAR_MultiUseFlag
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$7f
 LOOP_PPUDATA_e682:            ;XREF[1,0]:   e698
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag
 AND         #$1
 EOR         #$1
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag
 ASL         A
 ADC         #$2d
 STA         PPU_DATA
 TYA
 AND         #$1f
 BNE         LAB_e697
-INC         $0017                            ;= ??
-LAB_e697:                     ;XREF[1,0]:   e693
+INC         VAR_MultiUseFlag
+LAB_e697:
 DEY
 BPL         LOOP_PPUDATA_e682
+
+; Set NameTable1 attributes
 LDA         #$23
 LDY         #$c0
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
@@ -3911,12 +3922,12 @@ STA         PPU_CTRL
 LDA         #$1e
 STA         PPU_MASK
 LDY         #$0
-STY         $0017                            ;= ??
+STY         VAR_MultiUseFlag                            ;= ??
 DEY
 STY         $0018                            ;= ??
 LAB_PPUCTRL_PPUSCROLL_e748:   ;XREF[1,0]:   e794
 JSR         FUN_c91b                                ;undefined FUN_c91b()
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 STA         PPU_SCROLL
 LDA         #$0
 STA         PPU_SCROLL
@@ -3941,15 +3952,15 @@ BPL         LOOP_PPUSCROLL_e772
 LDA         #$0
 STA         PPU_SCROLL
 STA         PPU_SCROLL
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 CLC
 ADC         #$4
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         $0018                            ;= ??
 SEC
 SBC         #$4
 STA         $0018                            ;= ??
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 CMP         #$fc
 BEQ         LAB_PPUCTRL_PPUSCROLL_e797
 JMP         LAB_PPUCTRL_PPUSCROLL_e748
@@ -3971,8 +3982,8 @@ LDA         #$58
 STA         $0018                            ;= ??
 LDA         #$2
 STA         $0019                            ;= ??
-STA         $0017                            ;= ??
-LOOP_e7be:                    ;XREF[3,0]:   e801,e805,e809
+STA         VAR_MultiUseFlag                            ;= ??
+LOOP_e7be:                                   ; Menu Loop
 JSR         FUN_e96b                                ;undefined FUN_e96b()
 JSR         FUN_e981                                ;undefined FUN_e981()
 JSR         FUN_e981                                ;undefined FUN_e981()
@@ -3988,7 +3999,7 @@ ASL         A
 CLC
 ADC         #$7f
 STA         $0200                            ;= ??
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 BNE         LAB_e7f7
 LDA         $006b                            ;= ??
 BEQ         LAB_e7f7
@@ -4003,7 +4014,7 @@ STA         $0033                            ;= ??
 JMP         LOOP_e7b4
 LAB_e7f7:                     ;XREF[2,0]:   e7e1,e7e5
 LDA         $006b                            ;= ??
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 DEC         $0018                            ;= ??
 LDA         $0018                            ;= ??
 CMP         #$ff
@@ -4018,14 +4029,12 @@ JMP         FUN_c0d5                                ;undefined FUN_c0d5()
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
+; Draw the Skill Level text on menu stage, use A and Y register as PPU_ADDR and X register as level number
 FUN_e812:
-;XREF[3,0]:   e664,e66c,e674
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$b
-LOOP_PPUDATA_e817:            ;XREF[1,0]:   e81e
-; FWD[2,0]:   e94e,e94f
-LDA         $e944,Y
-                          ;= 1Ch
+LOOP_PPUDATA_e817:
+LDA         DAT_e944,Y
 STA         PPU_DATA
 DEY
 BPL         LOOP_PPUDATA_e817
@@ -4074,8 +4083,21 @@ LDY         $0033                            ;= ??
 LDA         DAT_e954,Y                              ;= 21h    !
 JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
 RTS
-DAT_e86d:                     ;XREF[2,0]:   e634,e640
-.byte $0A,$13,$FE,$02,$A9,$11,$09,$2F,$2D,$2F,$2D,$2F,$2D,$2F,$2D,$2F,$01,$11,$05,$12,$01,$2F,$2D,$2F,$2D,$2F,$2D,$2F,$2D,$2D,$2F,$2D,$2F,$2D,$2F,$2D,$2F,$02,$12,$FE,$2D,$11,$01,$11,$02,$2F,$2D,$2F,$2D,$2F,$2D,$2F,$2F,$2D,$2F,$2D,$2F,$2D,$2F,$03,$11,$06,$11,$03,$2F,$2D,$2F,$2D,$2F,$2D,$2D,$2F,$2D,$2F,$2D,$2F,$04,$11,$06,$11,$04,$2F,$2D,$2F,$2D,$2F,$0F,$0F,$0F,$0F,$04,$13,$FB,$2D,$FA,$12,$FB,$2D,$FA,$12,$FB,$2D,$13,$FE,$08,$11,$2D,$11,$2D,$11,$2D,$11,$2D,$11,$2D,$11,$2D,$11,$0B,$13,$FD,$2D,$11,$2D,$11,$2D,$11,$03,$12,$FE,$09,$11,$FF,$2E,$BA,$2D,$14,$2D,$11,$2D,$11,$2D,$11,$0B,$11,$2D,$FF,$2E,$2D,$11,$2D,$11,$2D,$FC,$12,$FD,$2D,$13,$FE,$03,$00
+
+; Menu logo, F-1 Race and squared flag, this is an encoded data.
+; This encoded the data in a way that only tiles with index highet than $20
+; is presented in the screen, otherwise the values are only use to inform
+; the number of empty spaces should be add in PPU_DATA.
+DAT_e86d:
+.byte $0A,$13,$FE,$02,$A9,$11,$09,$2F,$2D,$2F,$2D,$2F,$2D,$2F,$2D,$2F,$01,$11
+.byte $05,$12,$01,$2F,$2D,$2F,$2D,$2F,$2D,$2F,$2D,$2D,$2F,$2D,$2F,$2D,$2F,$2D
+.byte $2F,$02,$12,$FE,$2D,$11,$01,$11,$02,$2F,$2D,$2F,$2D,$2F,$2D,$2F,$2F,$2D
+.byte $2F,$2D,$2F,$2D,$2F,$03,$11,$06,$11,$03,$2F,$2D,$2F,$2D,$2F,$2D,$2D,$2F
+.byte $2D,$2F,$2D,$2F,$04,$11,$06,$11,$04,$2F,$2D,$2F,$2D,$2F,$0F,$0F,$0F,$0F
+.byte $04,$13,$FB,$2D,$FA,$12,$FB,$2D,$FA,$12,$FB,$2D,$13,$FE,$08,$11,$2D,$11
+.byte $2D,$11,$2D,$11,$2D,$11,$2D,$11,$2D,$11,$0B,$13,$FD,$2D,$11,$2D,$11,$2D
+.byte $11,$03,$12,$FE,$09,$11,$FF,$2E,$BA,$2D,$14,$2D,$11,$2D,$11,$2D,$11,$0B
+.byte $11,$2D,$FF,$2E,$2D,$11,$2D,$11,$2D,$FC,$12,$FD,$2D,$13,$FE,$03,$00
 DAT_e90e:                     ;XREF[1,0]:   e6a3
 .byte $00,$00,$00,$00,$55,$A5,$FF,$00
 DAT_e916:                     ;XREF[1,0]:   e6cf
@@ -4083,7 +4105,9 @@ DAT_e916:                     ;XREF[1,0]:   e6cf
 DAT_e942:                     ;XREF[1,0]:   e6ee
 .byte $01
 DAT_e943:                     ;XREF[1,0]:   e6ee
-.byte $24,$2D,$15,$0E,$1F,$0E,$15,$2D,$15,$15,$12
+.byte $24
+DAT_e944:
+.byte $2D,$15,$0E,$1F,$0E,$15,$2D,$15,$15,$12
 DAT_e94e:                     ;XREF[1,0]:   e817
 .byte $14
 DAT_e94f:                     ;XREF[1,0]:   e817
@@ -4443,14 +4467,14 @@ STA         $0024                            ;= ??
 LDA         #$7
 STA         $0024+1
 LDY         #$0
-STY         $0017                            ;= ??
+STY         VAR_MultiUseFlag                            ;= ??
 STY         $0018                            ;= ??
 STY         $001b                            ;= ??
 LAB_ebcd:                     ;XREF[1,0]:   ec19
 LDY         #$1
 LDA         ($0022),Y                        ;= ??
 SEC
-SBC         $0017                            ;= ??
+SBC         VAR_MultiUseFlag                            ;= ??
 STA         $0019                            ;= ??
 INY
 LDA         ($0022),Y                        ;= ??
@@ -4474,7 +4498,7 @@ STA         ($0024),Y                        ;= ??
 JMP         LAB_ec4c
 LAB_ebf9:                     ;XREF[1,0]:   ebed
 LDA         #$0
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 STA         $0018                            ;= ??
 LDA         #$30
 STA         $001c                            ;= ??
@@ -4512,10 +4536,10 @@ LDA         #$81
 LAB_ec36:                     ;XREF[1,0]:   ec32
 STA         ($0024),Y                        ;= ??
 INC         $001b                            ;= ??
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 CLC
 ADC         $001c                            ;= ??
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 BCC         LAB_ec45
 INC         $0018                            ;= ??
 LAB_ec45:                     ;XREF[1,0]:   ec41
@@ -4536,11 +4560,11 @@ LAB_ec60:                     ;XREF[1,0]:   ec84
 LDY         #$0
 LDA         ($0022),Y                        ;= ??
 STA         ($0024),Y                        ;= ??
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 INY
 LDA         ($0022),Y                        ;= ??
 STA         ($0024),Y                        ;= ??
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 BNE         LAB_ec87
 LDA         ($0022),Y                        ;= ??
 BNE         LOOP_ec76
@@ -4564,24 +4588,24 @@ BEQ         LOOP_ec94
 CMP         #$80
 BNE         LOOP_ec76
 LOOP_ec94:                    ;XREF[2,0]:   ec8e,ecba
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 BMI         LAB_eca3
 SEC
 SBC         #$8
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 BMI         LOOP_ec76
 BEQ         LOOP_ec76
 BPL         LAB_ecac
 LAB_eca3:                     ;XREF[1,0]:   ec96
 CLC
 ADC         #$8
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 BPL         LOOP_ec76
 BEQ         LOOP_ec76
 LAB_ecac:                     ;XREF[1,0]:   eca1
 JSR         FUN_ecbc                                ;undefined FUN_ecbc()
 LDY         #$0
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 STA         ($0024),Y                        ;= ??
 INY
 LDA         #$1
@@ -4633,7 +4657,7 @@ RTS
 FUN_f095:
 ;XREF[2,0]:   c7ae,c9cb
 LDA         #$20
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         #$55
 STA         $0018                            ;= ??
 ;************************************************************************************************
@@ -4648,7 +4672,7 @@ LDA         DAT_f0e2,Y                              ;= F0h
 STA         $0022+1
 LDX         #$3
 LOOP_f0ab:                    ;XREF[1,0]:   f0d1
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 LDY         $0018                            ;= ??
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$0
@@ -4696,7 +4720,7 @@ LDX         #$8
 CPY         #$8
 BCS         LAB_f28e
 LDA         DAT_f2a6,Y                              ;= 28h    (
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDY         #$0
 LOOP_f271:                    ;XREF[1,0]:   f27d
 LDA         ($0022),Y                        ;= ??
@@ -4706,7 +4730,7 @@ STA         $200,X
 STA         $300,X
 INX
 INY
-CPY         $0017                            ;= ??
+CPY         VAR_MultiUseFlag                            ;= ??
 BCC         LOOP_f271
 LAB_f27f:                     ;XREF[1,0]:   f293
 INC         $0056                            ;= ??
@@ -4728,20 +4752,20 @@ DAT_f2a6:                     ;XREF[1,0]:   f26a
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
+; Clear Both Nametable before draw anything or enable the background
 LAB_PPUCTRL_PPUMASK_f36e:
-;XREF[2,0]:   cfd6,e60e
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         #$0
 STA         $0015                            ;= ??
 STA         PPU_MASK
-LDA         VAR_PPUCtrl                     ;= ??
+LDA         VAR_PPUCtrl
 STA         PPU_CTRL
 LDA         #$20
 LDY         #$0
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$2d
-LOOP_f386:                    ;XREF[1,0]:   f38a
-JSR         LAB_PPUDATA_d0fb                        ;undefined LAB_PPUDATA_d0fb()
+LOOP_f386:
+JSR         LAB_PPUDATA_d0fb        ; Set PPU_DATA using registers A
 INY
 BNE         LOOP_f386
 JSR         FUN_c91b                                ;undefined FUN_c91b()
@@ -4750,17 +4774,20 @@ LDY         #$0
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$2d
 LOOP_f398:                    ;XREF[1,0]:   f39c
-JSR         LAB_PPUDATA_d0fb                        ;undefined LAB_PPUDATA_d0fb()
+JSR         LAB_PPUDATA_d0fb        ; Set PPU_DATA using registers A
 INY
 BNE         LOOP_f398
+
+; function doesn't return and fallthrough next function
+
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
+; Clear sprites buffer on RAM to be copied using OAM process
 FUN_f39e:
-;XREF[1,0]:   c0db
 LDY         #$0
 LDA         #$f0
-LOOP_f3a2:                    ;XREF[1,0]:   f3a9
+LOOP_f3a2:
 STA         $0200,Y                          ;= ??
 STA         $0300,Y                          ;= ??
 INY
@@ -4796,23 +4823,23 @@ ADC         #$2
 STA         $00b7                            ;= ??
 LAB_f3ce:                     ;XREF[2,0]:   f3c0,f3c6
 LDA         $00b6                            ;= ??
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 LDA         $00b7                            ;= ??
 ASL         A
-ROL         $0017                            ;= ??
+ROL         VAR_MultiUseFlag                            ;= ??
 ASL         A
-ROL         $0017                            ;= ??
+ROL         VAR_MultiUseFlag                            ;= ??
 STA         $0018                            ;= ??
 LDA         $00b5                            ;= ??
 SEC
 SBC         $0018                            ;= ??
 STA         $00b5                            ;= ??
 LDA         $00b4                            ;= ??
-SBC         $0017                            ;= ??
+SBC         VAR_MultiUseFlag                            ;= ??
 STA         $00b4                            ;= ??
 TAX
 LDA         DAT_e449,X                              ;= 54h    T
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 TXA
 LSR         A
 LSR         A
@@ -4845,7 +4872,7 @@ LDY         #$0
 LOOP_f428:                    ;XREF[1,0]:   f464
 LDA         ($0022),Y                        ;= ??
 CLC
-ADC         $0017                            ;= ??
+ADC         VAR_MultiUseFlag                            ;= ??
 ; FWD[2,0]:   0208,020c
 STA         $200,X
 ; FWD[2,0]:   0308,030c
@@ -4897,7 +4924,7 @@ LDX         #%00001111          ; Enable Pulse 1 and 2, Triangle and Noise chann
 STX         APU_MASTER_CTRL
 LDA         #$ff
 LOOP_f483:                    ;XREF[1,0]:   f487
-STA         $1c0,X
+STA         $01c0,X
 DEX
 BPL         LOOP_f483
 LDA         $0053                            ;= ??
@@ -4965,7 +4992,7 @@ DAT_f4fc:                     ;XREF[1,0]:   f4ae
 LAB_JOYPAD_PORT2_f505:
 ;XREF[6,0]:   ca07,d0c6,d0cc,e620,e7d0,ff47
 LDA         #$c0
-STA         JOYPAD_PORT2
+STA         JOYPAD_PORT2                     ; Configure APU timing, not controller input, select  5-steps, disable frame IRQ
 LDA         $00b8                            ;= ??
 BEQ         LAB_f52d
 LDX         $00bc                            ;= ??
@@ -4979,7 +5006,7 @@ STA         $00b8                            ;= ??
 STA         $00c2                            ;= ??
 LAB_f520:                     ;XREF[2,0]:   f514,f518
 LDX         #$ff
-STX         $00bd                            ;= ??
+STX         $00bd                            ; unused
 STX         $00b8                            ;= ??
 LDA         $00c2                            ;= ??
 BMI         LAB_f52d
@@ -5534,7 +5561,7 @@ BNE         LAB_ff4a
 JSR         LAB_JOYPAD_PORT2_f505                   ;undefined LAB_JOYPAD_PORT2_f505()
 LAB_ff4a:                     ;XREF[2,0]:   ff41,ff45
 LDA         #$0
-STA         $0017                            ;= ??
+STA         VAR_MultiUseFlag                            ;= ??
 STA         $0018                            ;= ??
 LDA         #$3e
 SEC
@@ -5555,7 +5582,7 @@ LAB_ff6e:                     ;XREF[1,0]:   ff60
 LDX         #$0
 LOOP_ff70:                    ;XREF[1,0]:   ff7a
 JSR         $0600                            ;undefined FUN_0600()
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 NOP
 NOP
 NOP
@@ -5564,7 +5591,7 @@ BCC         LOOP_ff70
 JSR         $0600                            ;undefined FUN_0600()
 LOOP_ff7f:                    ;XREF[1,0]:   ff89
 JSR         $0600                            ;undefined FUN_0600()
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 NOP
 NOP
 NOP
@@ -5573,7 +5600,7 @@ BCC         LOOP_ff7f
 JSR         $0600                            ;undefined FUN_0600()
 LOOP_ff8e:                    ;XREF[1,0]:   ff98
 JSR         $0600                            ;undefined FUN_0600()
-LDA         $0017                            ;= ??
+LDA         VAR_MultiUseFlag                            ;= ??
 NOP
 NOP
 NOP
