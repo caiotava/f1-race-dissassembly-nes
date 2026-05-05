@@ -2,11 +2,34 @@
 .include "header.asm"
 
 .segment "ZEROPAGE"
-VAR_Padding:        .res 20
-VAR_PPUCtrl:        .res 1   ; $0014 = store the value in ppu_ctrl
-VAR_0015:           .res 1
-VAR_IsAfterVBlank:  .res 1   ; $0016 = informs if the NMI vblank has already finished
-VAR_MultiUseFlag:   .res 1   ; $0017 = identify the position of level cursor select on menu
+; HighScore 01
+VAR_HighScore01_05:    .res 1   ; $0000 = Store the column 5 of level 1 highscore.
+VAR_HighScore01_04:    .res 1   ; $0001 = Store the column 4 of level 1 highscore.
+VAR_HighScore01_03:    .res 1   ; $0002 = Store the column 3 of level 1 highscore.
+VAR_HighScore01_02:    .res 1   ; $0003 = Store the column 2 of level 1 highscore.
+VAR_HighScore01_01:    .res 1   ; $0004 = Store the column 1 of level 1 highscore.
+; HighScore 02
+VAR_HighScore02_05:    .res 1   ; $0005 = Store the column 5 of level 2 highscore.
+VAR_HighScore02_04:    .res 1   ; $0006 = Store the column 4 of level 2 highscore.
+VAR_HighScore02_03:    .res 1   ; $0007 = Store the column 3 of level 2 highscore.
+VAR_HighScore02_02:    .res 1   ; $0008 = Store the column 2 of level 2 highscore.
+VAR_HighScore02_01:    .res 1   ; $0009 = Store the column 1 of level 2 highscore.
+; HighScore 03
+VAR_HighScore03_05:    .res 1   ; $0009 = Store the column 5 of level 3 highscore.
+VAR_HighScore03_04:    .res 1   ; $000A = Store the column 4 of level 3 highscore.
+VAR_HighScore03_03:    .res 1   ; $000B = Store the column 3 of level 3 highscore.
+VAR_HighScore03_02:    .res 1   ; $000C = Store the column 2 of level 3 highscore.
+VAR_HighScore03_01:    .res 1   ; $000D = Store the column 1 of level 3 highscore.
+
+VAR_Padding:           .res 5
+VAR_PPUCtrl:           .res 1   ; $0014 = store the value in ppu_ctrl
+VAR_0015:              .res 1
+VAR_IsAfterVBlank:     .res 1   ; $0016 = informs if the NMI vblank has already finished
+VAR_MultiUseFlag:      .res 1   ; $0017 = identify the position of level cursor select on menu
+
+VAR_Pading2:           .res 27  ; $0016 - $0032
+
+Var_SelectedSkillLevel: .res 1  ; $0033 = Store the skill level selected in the Menu Screen
 
 .segment "CODE"
 .org $C000
@@ -23,7 +46,7 @@ Reset:
     LDX #$14
 
 ClearZeroPage:
-    STA $0,x
+    STA VAR_HighScore01_05,x   ; First position of ZEROPAGE = $0000
     INX
     BNE ClearZeroPage
 
@@ -47,13 +70,13 @@ LAB_c030:
     LDX #$13
     LDA #$0
 LOOP_c034:
-    STA $0,x
+    STA VAR_HighScore01_05,x   ; First position of ZEROPAGE = $0000
     DEX
     BPL LOOP_c034
-    LDA #$1
-    STA $0003
-    STA $0008
-    STA $000d
+    LDA #$1                     ; Initialize the highscore with value 1000, an additional 0 is added in drawing func
+    STA VAR_HighScore01_02
+    STA VAR_HighScore02_02
+    STA VAR_HighScore03_02
 LAB_c041:
     JSR LAB_APU_MASTERCTRL_REG_f46e
     LDX #$5e
@@ -163,7 +186,7 @@ FUN_c0d5:
     STA $00a6
     STA $00a7
     JSR FUN_f39e
-    LDY $0033
+    LDY Var_SelectedSkillLevel
     LDA DAT_c540,Y
     STA $002d
     LDX #$a
@@ -195,7 +218,7 @@ LAB_c10c:
 LAB_c10e:
     LDA $0071                            ;= ??
     BNE LAB_c11d
-    LDA $0033                            ;= ??
+    LDA Var_SelectedSkillLevel
     BEQ LAB_c11d
     LDY #$0
     TYA
@@ -478,7 +501,7 @@ LAB_c300:                     ;XREF[2,0]:   c2e9,c2f8
 LDY         #$0
 LDA         $0071                            ;= ??
 BNE         LAB_c308
-LDY         $0033                            ;= ??
+LDY         Var_SelectedSkillLevel
 LAB_c308:                     ;XREF[1,0]:   c304
 LDA         DAT_c53d,Y
 CLC
@@ -2010,15 +2033,15 @@ LDA         #$3f
 LDY         #$0
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$f
-JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
+JSR         LAB_PPUDATA_d101                        ; LAB_PPUDATA_d101() Store the register A twice into PPU_DATA
 LDA         #$2a
-JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
+JSR         LAB_PPUDATA_d101                        ; LAB_PPUDATA_d101() Store the register A twice into PPU_DATA
 LDA         #$f
 JSR         LAB_PPUDATA_d0fe                        ;undefined LAB_PPUDATA_d0fe()
 LDA         #$30
 STA         PPU_DATA
 LDA         #$f
-JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
+JSR         LAB_PPUDATA_d101                        ; LAB_PPUDATA_d101() Store the register A twice into PPU_DATA
 LDA         #$26
 STA         PPU_DATA
 LDA         #$2c
@@ -2041,7 +2064,7 @@ LDA         #$23
 LDY         #$db
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$aa
-JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
+JSR         LAB_PPUDATA_d101                        ; LAB_PPUDATA_d101() Store the register A twice into PPU_DATA
 LDA         #$ee
 STA         PPU_DATA
 LDA         #$23
@@ -2050,7 +2073,7 @@ JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$53
 STA         PPU_DATA
 LDA         #$50
-JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
+JSR         LAB_PPUDATA_d101                        ; LAB_PPUDATA_d101() Store the register A twice into PPU_DATA
 LDA         #$5c
 STA         PPU_DATA
 LDA         #$22
@@ -2120,9 +2143,8 @@ STA         PPU_DATA
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
+; Set twice the PPU_DATA with the value in register A
 LAB_PPUDATA_d101:
-;XREF[9,0]:   d040,d045,d054,d086,d09c,e861,e869,ea6f
-;             eb49
 STA         PPU_DATA
 STA         PPU_DATA
 RTS
@@ -2290,24 +2312,24 @@ INX
 CPX         #$5
 BCC         LOOP_d20b
 LAB_d21c:                     ;XREF[2,0]:   d205,d20f
-LDY         $0033                            ;= ??
+LDY         Var_SelectedSkillLevel
 LDX         DAT_cf69,Y
 LDA         $000f                            ;= ??
 SEC
-SBC         $0,X
+SBC         VAR_HighScore01_05,X
 LDA         $0010                            ;= ??
-SBC         $1,X
+SBC         VAR_HighScore01_04,X
 LDA         $0011                            ;= ??
-SBC         $2,X
+SBC         VAR_HighScore01_03,X
 LDA         $0012                            ;= ??
-SBC         $3,X
+SBC         VAR_HighScore01_02,X
 LDA         $0013                            ;= ??
-SBC         $4,X
+SBC         VAR_HighScore01_01,X
 BCC         LAB_d245
 LDY         #$0
 LOOP_d23a:                    ;XREF[1,0]:   d243
 LDA         $f,Y
-STA         $0,X
+STA         VAR_HighScore01_05,X         ; First position of ZEROPAGE = $0000
 INX
 INY
 CPY         #$5
@@ -3834,36 +3856,40 @@ LAB_e697:
 DEY
 BPL         LOOP_PPUDATA_e682
 
-; Set NameTable1 attributes
+; Set NameTable1 attributes. It is a loop of 7 lines by 7 columns
 LDA         #$23
 LDY         #$c0
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$0
-LOOP_e6a3:                    ;XREF[1,0]:   e6b1
+LOOP_e6a3:
 LDA         DAT_e90e,Y
 LDX         #$7
-LOOP_PPUDATA_e6a8:            ;XREF[1,0]:   e6ac
+LOOP_PPUDATA_e6a8:
 STA         PPU_DATA
 DEX
 BPL         LOOP_PPUDATA_e6a8
 INY
 CPY         #$8
 BCC         LOOP_e6a3
+
+; Set NameTable2 attributes. only with 0 the palette index
 LDA         #$27
 LDY         #$c0
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$0
 TYA
-LOOP_PPUDATA_e6bd:            ;XREF[1,0]:   e6c3
+LOOP_PPUDATA_e6bd:
 STA         PPU_DATA
 INY
 CPY         #$40
 BCC         LOOP_PPUDATA_e6bd
 JSR         FUN_c91b                                ;undefined FUN_c91b()
+
+; Set Palette`color 1 (background) and 2 (sprite). 16 bytes for each palette color.
 LDA         #$3f
 LDY         #$0
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
-LOOP_PPUDATA_e6cf:            ;XREF[1,0]:   e6d8
+LOOP_PPUDATA_e6cf:
 LDA         DAT_e916,Y                              ;= 0Fh
 STA         PPU_DATA
 INY
@@ -3874,30 +3900,31 @@ LDY         #$0
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 TYA
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
+
+; Draw the text "@1984 Nintendo" on Menu screen, text is stored back-to-front.
 LDA         #$23
 LDY         #$49
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
-LDY         #$d
-LOOP_PPUDATA_e6ee:            ;XREF[1,0]:   e6f5
-; FWD[2,0]:   e942,e943
-LDA         $e936,Y
-                          ;= 24h
+LDY         #$d                     ; $0D = 14
+LOOP_PPUDATA_e6ee:
+LDA         DAT_e936,Y                 ;= 24h
 STA         PPU_DATA
 DEY
 BPL         LOOP_PPUDATA_e6ee
+
+; Draw the text "top-" text on Menu screen.
 LDA         #$22
 LDY         #$eb
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDY         #$3
-LOOP_PPUCTRL_PPUMASK_PPUSCR:   ;e707
-; FWD[2,0]:   e952,e953
-LDA         $e950,Y
-                          ;= 1Dh
+LOOP_PPUCTRL_PPUMASK_PPUSCR:
+LDA         DAT_e950,Y
 STA         PPU_DATA
 DEY
 BPL         LOOP_PPUCTRL_PPUMASK_PPUSCR
+
 JSR         FUN_e824                                ;undefined FUN_e824()
-LDA         $0033                            ;= ??
+LDA         Var_SelectedSkillLevel
 ASL         A
 ASL         A
 ASL         A
@@ -3991,7 +4018,7 @@ JSR         FUN_c91b                                ;undefined FUN_c91b()
 JSR         FUN_e824                                ;undefined FUN_e824()
 JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
 JSR         LAB_JOYPAD_PORT2_f505                   ;undefined LAB_JOYPAD_PORT2_f505()
-LDA         $0033                            ;= ??
+LDA         Var_SelectedSkillLevel
 ASL         A
 ASL         A
 ASL         A
@@ -4003,14 +4030,14 @@ LDA         VAR_MultiUseFlag                            ;= ??
 BNE         LAB_e7f7
 LDA         $006b                            ;= ??
 BEQ         LAB_e7f7
-LDA         $0033                            ;= ??
+LDA         Var_SelectedSkillLevel
 CLC
 ADC         #$1
 CMP         #$3
 BCC         LAB_e7f2
 LDA         #$0
 LAB_e7f2:                     ;XREF[1,0]:   e7ee
-STA         $0033                            ;= ??
+STA         Var_SelectedSkillLevel
 JMP         LOOP_e7b4
 LAB_e7f7:                     ;XREF[2,0]:   e7e1,e7e5
 LDA         $006b                            ;= ??
@@ -4043,45 +4070,51 @@ RTS
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
+; Draw the highscore on Menu screen, each skill level has a different highscore.
+; 00-04 bytes in memory = Skill level 1 highscore
+; 05-0A bytes in memory = skill level 2 highscore
+; 0B-0E bytes in memory = skill level 3 highscore
+; Each byte represent a column in the score value, the value is little-endian
 FUN_e824:
-;XREF[2,0]:   e709,e7ca
 LDA         #$0
 STA         $0038                            ;= ??
 LDA         #$22
 LDY         #$ef
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
-LDY         $0033                            ;= ??
+LDY         Var_SelectedSkillLevel
 LDA         DAT_cf69,Y
 CLC
 ADC         #$4
 TAX
 LDY         #$4
-LOOP_e83a:                    ;XREF[1,0]:   e851
+LOOP_e83a:
 STX         $001a                            ;= ??
-LDA         $0,X
+LDA         VAR_HighScore01_05,X                ; First position of ZEROPAGE/highscores = $0000
 BNE         LAB_e848
 LDX         $0038                            ;= ??
 BNE         LAB_PPUDATA_e84a
 LDA         #$2d
 BNE         LAB_PPUDATA_e84a
-LAB_e848:                     ;XREF[1,0]:   e83e
+LAB_e848:
 STA         $0038                            ;= ??
-LAB_PPUDATA_e84a:             ;XREF[2,0]:   e842,e846
+LAB_PPUDATA_e84a:
 STA         PPU_DATA
 LDX         $001a                            ;= ??
 DEX
 DEY
 BPL         LOOP_e83a
-LDA         #$0
+LDA         #$0                             ; set the last score 00 most right column
 STA         PPU_DATA
+
+; Set the palette color based in the skill selected
 LDA         #$3f
 LDY         #$8
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$f
-JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
-LDY         $0033                            ;= ??
-LDA         DAT_e954,Y                              ;= 21h    !
-JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
+JSR         LAB_PPUDATA_d101        ; LAB_PPUDATA_d101() Store the register A twice into PPU_DATA
+LDY         Var_SelectedSkillLevel
+LDA         DAT_e954,Y
+JSR         LAB_PPUDATA_d101        ; LAB_PPUDATA_d101() Store the register A twice into PPU_DATA
 RTS
 
 ; Menu logo, F-1 Race and squared flag, this is an encoded data.
@@ -4098,24 +4131,22 @@ DAT_e86d:
 .byte $2D,$11,$2D,$11,$2D,$11,$2D,$11,$2D,$11,$0B,$13,$FD,$2D,$11,$2D,$11,$2D
 .byte $11,$03,$12,$FE,$09,$11,$FF,$2E,$BA,$2D,$14,$2D,$11,$2D,$11,$2D,$11,$0B
 .byte $11,$2D,$FF,$2E,$2D,$11,$2D,$11,$2D,$FC,$12,$FD,$2D,$13,$FE,$03,$00
-DAT_e90e:                     ;XREF[1,0]:   e6a3
+; Attribute data main menu
+DAT_e90e:
 .byte $00,$00,$00,$00,$55,$A5,$FF,$00
-DAT_e916:                     ;XREF[1,0]:   e6cf
-.byte $0F,$0F,$16,$30,$0F,$0F,$27,$27,$0F,$0F,$21,$21,$0F,$0F,$30,$30,$0F,$3A,$00,$00,$0F,$00,$00,$00,$0F,$00,$00,$00,$0F,$00,$00,$00,$18,$0D,$17,$0E,$1D,$17,$12,$17,$2D,$04,$08,$09
-DAT_e942:                     ;XREF[1,0]:   e6ee
-.byte $01
-DAT_e943:                     ;XREF[1,0]:   e6ee
-.byte $24
+DAT_e916:
+; Palette color 1 background menu 16 bytes
+.byte $0F,$0F,$16,$30,$0F,$0F,$27,$27,$0F,$0F,$21,$21,$0F,$0F,$30,$30
+; Palette color 2 sprite menu 16 bytes
+.byte $0F,$3A,$00,$00,$0F,$00,$00,$00,$0F,$00,$00,$00,$0F,$00,$00,$00
+; Menu text @1984-Nintendo, but it is store in a reverse way, from end-to-beginning
+DAT_e936:
+.byte $18,$0D,$17,$0E,$1D,$17,$12,$17,$2D,$04,$08,$09,$01,$24
 DAT_e944:
-.byte $2D,$15,$0E,$1F,$0E,$15,$2D,$15,$15,$12
-DAT_e94e:                     ;XREF[1,0]:   e817
-.byte $14
-DAT_e94f:                     ;XREF[1,0]:   e817
-.byte $1C,$26,$19
-DAT_e952:                     ;XREF[1,0]:   e700
-.byte $18
-DAT_e953:                     ;XREF[1,0]:   e700
-.byte $1D
+.byte $2D,$15,$0E,$1F,$0E,$15,$2D,$15,$15,$12,$14,$1C
+; Menu text "Top-", store in a reverse way, from end-to-beginning
+DAT_e950:
+.byte $26,$19,$18,$1D
 DAT_e954:                     ;XREF[1,0]:   e866
 .byte $21,$25,$2A
 ;************************************************************************************************
@@ -4293,7 +4324,7 @@ LDA         #$23
 LDY         #$d3
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$ff
-JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
+JSR         LAB_PPUDATA_d101                        ; LAB_PPUDATA_d101() Store the register A twice into PPU_DATA
 JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
 LDA         #$fd
 LDY         #$0
@@ -4391,7 +4422,7 @@ LDA         #$23
 LDY         #$d3
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$55
-JSR         LAB_PPUDATA_d101                        ;undefined LAB_PPUDATA_d101()
+JSR         LAB_PPUDATA_d101                        ; LAB_PPUDATA_d101() Store the register A twice into PPU_DATA
 JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
 LDY         #$0
 JSR         FUN_ff08                                ;undefined FUN_ff08()
