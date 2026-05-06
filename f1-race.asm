@@ -1270,9 +1270,9 @@ STA         $300,Y
 INY
 BNE         LOOP_PPUCTRL_PPUSCROLL_ca0e
 LDY         #$0
-JSR         FUN_ff08                                ;undefined FUN_ff08()
-JSR         FUN_ff08                                ;undefined FUN_ff08()
-JSR         FUN_ff08                                ;undefined FUN_ff08()
+JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
+JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
+JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 LDA         $004b                            ;= ??
 ASL         A
 LDA         $004a                            ;= ??
@@ -1790,7 +1790,7 @@ STY         $006d                            ;= ??
 INY
 STY         $006e                            ;= ??
 LDY         #$40
-JSR         FUN_ff08                                ;undefined FUN_ff08()
+JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 INC         $004f                            ;= ??
 JSR         FUN_cc75                                ;undefined FUN_cc75()
 JSR         FUN_d11b                                ;undefined FUN_d11b()
@@ -1874,7 +1874,7 @@ STA         PPU_DATA
 DEY
 BPL         LOOP_PPUDATA_cefa
 JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
-JSR         FUN_ff08                                ;undefined FUN_ff08()
+JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 LDA         #$2
 JSR         FUN_f48e                                ;undefined FUN_f48e()
 JSR         FUN_ff14                                ;undefined FUN_ff14()
@@ -1900,7 +1900,7 @@ LOOP_cf3a:                    ;XREF[1,0]:   cf4b
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 JSR         LAB_PPUCTRL_ca38                        ;undefined LAB_PPUCTRL_ca38()
 JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
-JSR         FUN_ff08                                ;undefined FUN_ff08()
+JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 JSR         FUN_ff14                                ;undefined FUN_ff14()
 LDA         $00b8                            ;= ??
 BPL         LOOP_cf3a
@@ -2110,7 +2110,7 @@ LOOP_d0d6:                    ;XREF[1,0]:   d0e7
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 JSR         LAB_PPUCTRL_ca38                        ;undefined LAB_PPUCTRL_ca38()
 JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
-JSR         FUN_ff08                                ;undefined FUN_ff08()
+JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 JSR         FUN_ff14                                ;undefined FUN_ff14()
 DEC         $00a4                            ;= ??
 BNE         LOOP_d0d6
@@ -3922,15 +3922,16 @@ LDA         DAT_e950,Y
 STA         PPU_DATA
 DEY
 BPL         LOOP_PPUCTRL_PPUMASK_PPUSCR
+JSR         FUN_e824                         ; FUN_e824() - Draw highscore and set color based on skill level selected
 
-JSR         FUN_e824                                ;undefined FUN_e824()
+;
 LDA         Var_SelectedSkillLevel
 ASL         A
 ASL         A
 ASL         A
-ASL         A
+ASL         A                                ; VAR_SelectSkillLevel * 2 * 2 * 2 * 2
 CLC
-ADC         #$7f
+ADC         #$7f                             ; $7F = 127
 STA         $0200                            ;= ??
 LDA         #$ff
 STA         $0201                            ;= ??
@@ -3938,59 +3939,91 @@ LDA         #$0
 STA         $0202                            ;= ??
 LDA         #$40
 STA         $0203                            ;= ??
+
+; Menu logo animation
+;
+; The effect is implemented using mid-frame PPU scroll changes to create a
+; split-screen transition between NameTable2 and NameTable1.
+;
+; NameTable2 contains the squared texture used as a transition
+; layer, while NameTable1 contains the F1/RACE logo and skill level text.
+;
+; Two scroll offsets are updated every frame:
+;   - NameTable2 scrolls from $00 to $FC in steps of 4
+;   - NameTable1 scrolls from $FF to $04 in steps of -4
+;
+; The CPU synchronizes with the PPU rendering timing to change the scroll
+; position during visible scanlines:
+;
+;   1. Wait for NMI/VBlank to start a new frame.
+;   2. Set the initial scroll to render the top portion using NameTable2.
+;   3. Waste CPU cycles so the PPU advances through the upper scanlines.
+;   4. Change the scroll mid-frame to reveal the RACE/F1 logo from
+;      NameTable1.
+;   5. Waste additional CPU cycles until the logo area is fully rendered.
+;   6. Restore the scroll so the skill level text remains fixed in the
+;      center of the screen.
+;
+; The delay loops are not used for rendering. They only consume CPU cycles
+; so the scroll writes happen at precise scanlines while the PPU is actively
+; drawing the frame.
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         #$20
 LDY         #$0
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
+STY         PPU_SCROLL              ; Set PPU_SCROLL twice because it use a latch register and defines X and Y
 STY         PPU_SCROLL
-STY         PPU_SCROLL
-LDA         #$91
+LDA         #%10010001              ; 10010001 = Enable NMI, NameTable 1 as background and use NameTable2
 STA         PPU_CTRL
-LDA         #$1e
+LDA         #%00011110              ; 00011110 = Show Sprite, Background and set to show left most 8 bits background and sprites
 STA         PPU_MASK
 LDY         #$0
-STY         VAR_MultiUseFlag                            ;= ??
-DEY
-STY         $0018                            ;= ??
-LAB_PPUCTRL_PPUSCROLL_e748:   ;XREF[1,0]:   e794
-JSR         FUN_c91b                                ;undefined FUN_c91b()
-LDA         VAR_MultiUseFlag                            ;= ??
+STY         VAR_MultiUseFlag        ; Using to store PPU_SCROLL X for NameTable 2
+DEY                                 ; Y = FF
+STY         $0018                   ; Store PPU_SCROLL X for NameTable 1
+LAB_PPUCTRL_PPUSCROLL_e748:
+JSR         FUN_c91b                ;undefined FUN_c91b()
+LDA         VAR_MultiUseFlag        ; Store the PPU_SCROLL on X axis NameTable 2
 STA         PPU_SCROLL
 LDA         #$0
 STA         PPU_SCROLL
 TAY
-LDA         #$91
+LDA         #%10010001              ; 10010001 = Enable NMI, NameTable 1 as background and use NameTable2
 STA         PPU_CTRL
+; Consume a few CPU cycle to fully render the squared flag from NameTable2 on top.
 LDX         #$6
-LOOP_PPUCTRL_PPUSCROLL_e75d:  ;XREF[1,0]:   e761
-JSR         FUN_ff08                                ;undefined FUN_ff08()
+LOOP_PPUCTRL_PPUSCROLL_e75d:
+JSR         FUN_ff08                         ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 DEX
 BPL         LOOP_PPUCTRL_PPUSCROLL_e75d
-LDA         $0018                            ;= ??
+LDA         $0018                            ; PPU_SCROLL X axis NameTable 1
 STA         PPU_SCROLL
 STA         PPU_SCROLL
-LDA         VAR_PPUCtrl                            ;= ??
+LDA         VAR_PPUCtrl                      ; Load initial PPUCtrl to redefine the configuration, to NameTable 1
 STA         PPU_CTRL
+; Consume a few CPU cycle to fully render the F1/RACE log text from NameTable1.
 LDX         #$4
-LOOP_PPUSCROLL_e772:          ;XREF[1,0]:   e776
-JSR         FUN_ff08                                ;undefined FUN_ff08()
+LOOP_PPUSCROLL_e772:
+JSR         FUN_ff08                         ; FUN_ff08() - Run a loop to decrement Y until it reaches 0, Since Y = 0, it will decrement Y and turn it FF
 DEX
 BPL         LOOP_PPUSCROLL_e772
+; Reset the SCROLL to show the skill level texts
 LDA         #$0
 STA         PPU_SCROLL
 STA         PPU_SCROLL
-LDA         VAR_MultiUseFlag                            ;= ??
+LDA         VAR_MultiUseFlag
 CLC
 ADC         #$4
-STA         VAR_MultiUseFlag                            ;= ??
-LDA         $0018                            ;= ??
+STA         VAR_MultiUseFlag
+LDA         $0018                            ; Get SCROLL value for NameTable1 to render F1/RACE logo
 SEC
 SBC         #$4
-STA         $0018                            ;= ??
-LDA         VAR_MultiUseFlag                            ;= ??
+STA         $0018                            ; Store SCROLL value for NameTable1
+LDA         VAR_MultiUseFlag
 CMP         #$fc
 BEQ         LAB_PPUCTRL_PPUSCROLL_e797
 JMP         LAB_PPUCTRL_PPUSCROLL_e748
+
 LAB_PPUCTRL_PPUSCROLL_e797:   ;XREF[1,0]:   e792
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 LDA         VAR_PPUCtrl                            ;= ??
@@ -4015,7 +4048,7 @@ JSR         FUN_e96b                                ;undefined FUN_e96b()
 JSR         FUN_e981                                ;undefined FUN_e981()
 JSR         FUN_e981                                ;undefined FUN_e981()
 JSR         FUN_c91b                                ;undefined FUN_c91b()
-JSR         FUN_e824                                ;undefined FUN_e824()
+JSR         FUN_e824                                ; FUN_e824() - Draw highscore and set color based on skill level selected
 JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
 JSR         LAB_JOYPAD_PORT2_f505                   ;undefined LAB_JOYPAD_PORT2_f505()
 LDA         Var_SelectedSkillLevel
@@ -4117,10 +4150,13 @@ LDA         DAT_e954,Y
 JSR         LAB_PPUDATA_d101        ; LAB_PPUDATA_d101() Store the register A twice into PPU_DATA
 RTS
 
+
+;************************************************************************************************
 ; Menu logo, F-1 Race and squared flag, this is an encoded data.
 ; This encoded the data in a way that only tiles with index highet than $20
 ; is presented in the screen, otherwise the values are only use to inform
 ; the number of empty spaces should be add in PPU_DATA.
+;************************************************************************************************
 DAT_e86d:
 .byte $0A,$13,$FE,$02,$A9,$11,$09,$2F,$2D,$2F,$2D,$2F,$2D,$2F,$2D,$2F,$01,$11
 .byte $05,$12,$01,$2F,$2D,$2F,$2D,$2F,$2D,$2F,$2D,$2D,$2F,$2D,$2F,$2D,$2F,$2D
@@ -4147,7 +4183,8 @@ DAT_e944:
 ; Menu text "Top-", store in a reverse way, from end-to-beginning
 DAT_e950:
 .byte $26,$19,$18,$1D
-DAT_e954:                     ;XREF[1,0]:   e866
+; Palette color to define the skill level selected on menu screen
+DAT_e954:
 .byte $21,$25,$2A
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
@@ -4346,7 +4383,7 @@ JSR         LAB_APU_MASTERCTRL_REG_f46e             ;undefined LAB_APU_MASTERCTR
 LDA         #$0
 JSR         FUN_f48e                                ;undefined FUN_f48e()
 LDY         #$0
-JSR         FUN_ff08                                ;undefined FUN_ff08()
+JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 JSR         FUN_ff14                                ;undefined FUN_ff14()
 LDA         #$1
 STA         $004f                            ;= ??
@@ -4425,7 +4462,7 @@ LDA         #$55
 JSR         LAB_PPUDATA_d101                        ; LAB_PPUDATA_d101() Store the register A twice into PPU_DATA
 JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
 LDY         #$0
-JSR         FUN_ff08                                ;undefined FUN_ff08()
+JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 JSR         FUN_ff14                                ;undefined FUN_ff14()
 RTS
 .byte $9E,$9D
@@ -4469,7 +4506,7 @@ EOR         #$1
 STA         $0047                            ;= ??
 LAB_eb92:                     ;XREF[1,0]:   eb8c
 LDY         #$0
-JSR         FUN_ff08                                ;undefined FUN_ff08()
+JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 JSR         FUN_ff14                                ;undefined FUN_ff14()
 DEC         $00a4                            ;= ??
 BNE         LOOP_eb5e
@@ -4766,13 +4803,13 @@ BCC         LOOP_f271
 LAB_f27f:                     ;XREF[1,0]:   f293
 INC         $0056                            ;= ??
 LDY         #$0
-JSR         FUN_ff08                                ;undefined FUN_ff08()
+JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 LDY         #$80
-JSR         FUN_ff08                                ;undefined FUN_ff08()
+JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 JMP         LAB_d3ff
 LAB_f28e:                     ;XREF[1,0]:   f268
 LDY         #$80
-JSR         FUN_ff08                                ;undefined FUN_ff08()
+JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 JMP         LAB_f27f
 DAT_f296:                     ;XREF[1,0]:   f25a
 .byte $AE,$AE,$D6,$0E,$D6,$0E,$D6,$0E
@@ -5541,10 +5578,8 @@ DAT_fe4d:                     ;XREF[2,0]:   fe3d,fe49
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
+; Function to run a loop that decrement Y until it reaches the value 0
 FUN_ff08:
-;XREF[17,0]:  ca19,ca1c,ca1f,ce5b,cf03,cf43,d0df,e75d
-;             e772,eaa4,eb51,eb94,f283,f288,f290,ff09
-;             ff6b
 DEY
 BNE         FUN_ff08
 ;************************************************************************************************
@@ -5608,7 +5643,7 @@ LDA         PPU_STATUS
 AND         #$40
 BEQ         LOOP_PPUSTATUS_ff62
 LDY         #$16
-JSR         FUN_ff08                                ;undefined FUN_ff08()
+JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 LAB_ff6e:                     ;XREF[1,0]:   ff60
 LDX         #$0
 LOOP_ff70:                    ;XREF[1,0]:   ff7a
