@@ -3,33 +3,39 @@
 
 .segment "ZEROPAGE"
 ; HighScore 01
-VAR_HighScore01_05:    .res 1   ; $0000 = Store the column 5 of level 1 highscore.
-VAR_HighScore01_04:    .res 1   ; $0001 = Store the column 4 of level 1 highscore.
-VAR_HighScore01_03:    .res 1   ; $0002 = Store the column 3 of level 1 highscore.
-VAR_HighScore01_02:    .res 1   ; $0003 = Store the column 2 of level 1 highscore.
-VAR_HighScore01_01:    .res 1   ; $0004 = Store the column 1 of level 1 highscore.
+VAR_HighScore01_05:     .res 1   ; $0000 = Store the column 5 of level 1 highscore.
+VAR_HighScore01_04:     .res 1   ; $0001 = Store the column 4 of level 1 highscore.
+VAR_HighScore01_03:     .res 1   ; $0002 = Store the column 3 of level 1 highscore.
+VAR_HighScore01_02:     .res 1   ; $0003 = Store the column 2 of level 1 highscore.
+VAR_HighScore01_01:     .res 1   ; $0004 = Store the column 1 of level 1 highscore.
 ; HighScore 02
-VAR_HighScore02_05:    .res 1   ; $0005 = Store the column 5 of level 2 highscore.
-VAR_HighScore02_04:    .res 1   ; $0006 = Store the column 4 of level 2 highscore.
-VAR_HighScore02_03:    .res 1   ; $0007 = Store the column 3 of level 2 highscore.
-VAR_HighScore02_02:    .res 1   ; $0008 = Store the column 2 of level 2 highscore.
-VAR_HighScore02_01:    .res 1   ; $0009 = Store the column 1 of level 2 highscore.
+VAR_HighScore02_05:     .res 1   ; $0005 = Store the column 5 of level 2 highscore.
+VAR_HighScore02_04:     .res 1   ; $0006 = Store the column 4 of level 2 highscore.
+VAR_HighScore02_03:     .res 1   ; $0007 = Store the column 3 of level 2 highscore.
+VAR_HighScore02_02:     .res 1   ; $0008 = Store the column 2 of level 2 highscore.
+VAR_HighScore02_01:     .res 1   ; $0009 = Store the column 1 of level 2 highscore.
 ; HighScore 03
-VAR_HighScore03_05:    .res 1   ; $0009 = Store the column 5 of level 3 highscore.
-VAR_HighScore03_04:    .res 1   ; $000A = Store the column 4 of level 3 highscore.
-VAR_HighScore03_03:    .res 1   ; $000B = Store the column 3 of level 3 highscore.
-VAR_HighScore03_02:    .res 1   ; $000C = Store the column 2 of level 3 highscore.
-VAR_HighScore03_01:    .res 1   ; $000D = Store the column 1 of level 3 highscore.
+VAR_HighScore03_05:     .res 1   ; $0009 = Store the column 5 of level 3 highscore.
+VAR_HighScore03_04:     .res 1   ; $000A = Store the column 4 of level 3 highscore.
+VAR_HighScore03_03:     .res 1   ; $000B = Store the column 3 of level 3 highscore.
+VAR_HighScore03_02:     .res 1   ; $000C = Store the column 2 of level 3 highscore.
+VAR_HighScore03_01:     .res 1   ; $000D = Store the column 1 of level 3 highscore.
 
-VAR_Padding:           .res 5
-VAR_PPUCtrl:           .res 1   ; $0014 = store the value in ppu_ctrl
-VAR_0015:              .res 1
-VAR_IsAfterVBlank:     .res 1   ; $0016 = informs if the NMI vblank has already finished
-VAR_MultiUseFlag:      .res 1   ; $0017 = identify the position of level cursor select on menu
+VAR_Padding:            .res 5
+VAR_PPUCtrl:            .res 1   ; $0014 = store the value in ppu_ctrl
+VAR_0015:               .res 1
+VAR_IsAfterVBlank:      .res 1   ; $0016 = informs if the NMI vblank has already finished
+VAR_MultiUseFlag:       .res 1   ; $0017 = identify the position of level cursor select on menu
 
-VAR_Pading2:           .res 27  ; $0016 - $0032
+VAR_Pading2:            .res 27  ; $0016 - $0032
 
 Var_SelectedSkillLevel: .res 1  ; $0033 = Store the skill level selected in the Menu Screen
+
+VAR_Pading3:            .res $84 ; $0034 - $00b7 - $84 = 132
+
+VAR_MusicNumber:        .res 1  ; $00b8 - Store the active music number, or FF in case music finished
+VAR_MusicPtrLo:         .res 1  ; $00b9 - Store the address of lo-byte of music data address
+VAR_MusicPtrHi:         .res 1  ; $00ba - Store the address of hi-byte of music data address
 
 .segment "CODE"
 .org $C000
@@ -1902,7 +1908,7 @@ JSR         LAB_PPUCTRL_ca38                        ;undefined LAB_PPUCTRL_ca38(
 JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
 JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 JSR         FUN_ff14                                ;undefined FUN_ff14()
-LDA         $00b8                            ;= ??
+LDA         VAR_MusicNumber
 BPL         LOOP_cf3a
 LDA         #$14
 JSR         FUN_d0d4                                ;undefined FUN_d0d4()
@@ -2097,7 +2103,7 @@ JSR         LAB_JOYPAD_PORT2_f505                   ;undefined LAB_JOYPAD_PORT2_
 LOOP_d0c9:                    ;XREF[1,0]:   d0d1
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 JSR         LAB_JOYPAD_PORT2_f505                   ;undefined LAB_JOYPAD_PORT2_f505()
-LDA         $00b8                            ;= ??
+LDA         VAR_MusicNumber
 BPL         LOOP_d0c9
 RTS
 ;************************************************************************************************
@@ -4024,26 +4030,27 @@ CMP         #$fc
 BEQ         LAB_PPUCTRL_PPUSCROLL_e797
 JMP         LAB_PPUCTRL_PPUSCROLL_e748
 
-LAB_PPUCTRL_PPUSCROLL_e797:   ;XREF[1,0]:   e792
+LAB_PPUCTRL_PPUSCROLL_e797:
 JSR         FUN_c91b                                ;undefined FUN_c91b()
-LDA         VAR_PPUCtrl                            ;= ??
+LDA         VAR_PPUCtrl
 STA         PPU_CTRL
 LDA         #$0
 STA         PPU_SCROLL
 STA         PPU_SCROLL
-DEC         $0037                            ;= ??
+DEC         $0037
 BPL         LOOP_e7b4
 LDA         #$3
 JSR         FUN_f48e                                ;undefined FUN_f48e()
 LDA         #$2
 STA         $0037                            ;= ??
-LOOP_e7b4:                    ;XREF[2,0]:   e7a9,e7f4
+LOOP_e7b4:
 LDA         #$58
 STA         $0018                            ;= ??
 LDA         #$2
 STA         $0019                            ;= ??
 STA         VAR_MultiUseFlag                            ;= ??
-LOOP_e7be:                                   ; Menu Loop
+; Menu Loop
+LOOP_e7be:
 JSR         FUN_e96b                                ;undefined FUN_e96b()
 JSR         FUN_e981                                ;undefined FUN_e981()
 JSR         FUN_e981                                ;undefined FUN_e981()
@@ -4057,11 +4064,11 @@ ASL         A
 ASL         A
 ASL         A
 CLC
-ADC         #$7f
+ADC         #$7f                             ; A += 127
 STA         $0200                            ;= ??
-LDA         VAR_MultiUseFlag                            ;= ??
+LDA         VAR_MultiUseFlag                 ; Used as a flag only for the first execution, after that it always 00
 BNE         LAB_e7f7
-LDA         $006b                            ;= ??
+LDA         $006b                            ; Check if the user has pressed the select button to change Level
 BEQ         LAB_e7f7
 LDA         Var_SelectedSkillLevel
 CLC
@@ -4078,10 +4085,10 @@ STA         VAR_MultiUseFlag                            ;= ??
 DEC         $0018                            ;= ??
 LDA         $0018                            ;= ??
 CMP         #$ff
-BNE         LOOP_e7be
-DEC         $0019                            ;= ??
+BNE         LOOP_e7be                        ; Menu main loop
+DEC         $0019                            ; $0019 was initilized with 2
 BPL         LOOP_e7be
-LDA         $00b8                            ;= ??
+LDA         VAR_MusicNumber                  ; If FF music finished and play the demo.
 BPL         LOOP_e7be
 LDA         #$0
 STA         $002a                            ;= ??
@@ -4210,7 +4217,6 @@ RTS
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
 FUN_e96b:
-;XREF[3,0]:   c579,e20a,e7be
 ASL         $002e                            ;= ??
 ROL         $002f                            ;= ??
 ROL         A
@@ -4229,7 +4235,6 @@ RTS
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
 FUN_e981:
-;XREF[4,0]:   e23c,e295,e7c1,e7c4
 ASL         $0030                            ;= ??
 ROL         $0031                            ;= ??
 ROL         A
@@ -4984,8 +4989,8 @@ LAB_APU_MASTERCTRL_REG_f46e:
 LDX         #$0
 STX         APU_DELTA_REG
 STX         $00bc                            ;= ??
-DEX
-STX         $00b8                            ;= ??
+DEX                                          ; X = FF
+STX         VAR_MusicNumber
 STX         $00bd                            ;= ??
 STX         $00c2                            ;= ??
 LDX         #%00001111          ; Enable Pulse 1 and 2, Triangle and Noise channels.
@@ -5016,13 +5021,13 @@ LDA         DAT_f4df,X                              ;= 32h    2
 STA         $00bd                            ;= ??
 CMP         #$1e
 BCC         LAB_f4a7
-CPX         $00b8                            ;= ??
+CPX         VAR_MusicNumber                  ; Pointer lo-byte of menu music
 BNE         LAB_f4a7
 RTS
 LAB_f4a7:                     ;XREF[2,0]:   f4a0,f4a4
-STX         $00b8                            ;= ??
+STX         VAR_MusicNumber                  ; Store music number
 LDA         DAT_f4f3,X
-STA         $00b9                            ;= ??
+STA         $00b9                            ; Pointer lo-byte of menu music
 LDA         DAT_f4fc,X
 STA         $00b9+1
 LDA         DAT_f4e9,X
@@ -5033,7 +5038,7 @@ LDA         #$1
 STA         $00bc                            ;= ??
 RTS
 LAB_APU_SND_SQUARE1_REG_APU_SND_SQUAR:;XREF[1,0]:   f48f
-STX         $00b8                            ;= ??
+STX         VAR_MusicNumber
 INX
 STX         $00bc                            ;= ??
 STX         $00bd                            ;= ??
@@ -5061,7 +5066,7 @@ LAB_JOYPAD_PORT2_f505:
 ;XREF[6,0]:   ca07,d0c6,d0cc,e620,e7d0,ff47
 LDA         #$c0
 STA         JOYPAD_PORT2                     ; Configure APU timing, not controller input, select  5-steps, disable frame IRQ
-LDA         $00b8                            ;= ??
+LDA         VAR_MusicNumber
 BEQ         LAB_f52d
 LDX         $00bc                            ;= ??
 BNE         LAB_f530
@@ -5070,12 +5075,12 @@ BNE         LAB_f520
 LDA         $0032                            ;= ??
 BNE         LAB_f520
 LDA         #$0
-STA         $00b8                            ;= ??
+STA         VAR_MusicNumber
 STA         $00c2                            ;= ??
 LAB_f520:                     ;XREF[2,0]:   f514,f518
 LDX         #$ff
 STX         $00bd                            ; unused
-STX         $00b8                            ;= ??
+STX         VAR_MusicNumber
 LDA         $00c2                            ;= ??
 BMI         LAB_f52d
 INX
@@ -5146,7 +5151,7 @@ AND         #$f
 TAX
 JSR         FUN_f57d                                ;undefined FUN_f57d()
 LDA         ($00b9),Y                        ;= ??
-STA         APU_SND_SQUARE1
+STA         APU_SND_SQUARE1,X
 STA         $01c0,X                          ;= ??
 JMP         FUN_f537
 LAB_f59d:                     ;XREF[1,0]:   f588
