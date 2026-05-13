@@ -36,6 +36,8 @@ VAR_Pading3:            .res $84 ; $0034 - $00b7 - $84 = 132
 VAR_MusicNumber:        .res 1  ; $00b8 - Store the active music number, or FF in case music finished
 VAR_MusicPtrLo:         .res 1  ; $00b9 - Store the address of lo-byte of music data address
 VAR_MusicPtrHi:         .res 1  ; $00ba - Store the address of hi-byte of music data address
+VAR_MusicData:          .res 1  ; $00bb - Music data tha should be sent to APU_DELTA_REG
+VAR_MusicNoteDuration:  .res 1  ; $00bc - Duration of a music note.
 
 .segment "CODE"
 .org $C000
@@ -1098,15 +1100,14 @@ DAT_c8f6:                     ;XREF[1,0]:   c5cb
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
+; Reset PPU_ADDR to #2000, PPU_SCROLL to 0 and PPU_MASK to enable sprites and background
 LAB_PPUMASK_PPUSCROLL_c906:
-;XREF[12,0]:  c184,ca04,ce51,cf00,cf40,cf89,d0bb,d0dc
-;             e7cd,ea72,eb4c,eb64
 LDA         #$20
 LDY         #$0
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 STY         PPU_SCROLL
 STY         PPU_SCROLL
-LDA         #$1e
+LDA         #%00011110              ; Show background, sprites and sprites, background tiles with 8x8 pixels
 STA         $0015                            ;= ??
 STA         PPU_MASK
 RTS
@@ -1264,7 +1265,7 @@ JSR         FUN_c91b                                ;undefined FUN_c91b()
 ;************************************************************************************************
 FUN_ca04:
 ;XREF[2,0]:   c9aa,c9ce
-JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
+JSR         LAB_PPUMASK_PPUSCROLL_c906              ; Set PPU_ADDR to #2000, PPU_SCROLL to 0, PPU_MASK enabling sprites and background
 JSR         LAB_JOYPAD_PORT2_f505                   ;undefined LAB_JOYPAD_PORT2_f505()
 LDY         #$4
 LDA         #$f0
@@ -1791,7 +1792,7 @@ STA         $00a4                            ;= ??
 LOOP_ce4b:                    ;XREF[7,0]:   ce8f,ce93,ce99,ce9f,cea5,cea9,cead
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 JSR         LAB_PPUCTRL_ca38                        ;undefined LAB_PPUCTRL_ca38()
-JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
+JSR         LAB_PPUMASK_PPUSCROLL_c906              ; Set PPU_ADDR to #2000, PPU_SCROLL to 0, PPU_MASK enabling sprites and background
 STY         $006d                            ;= ??
 INY
 STY         $006e                            ;= ??
@@ -1879,7 +1880,7 @@ LOOP_PPUDATA_cefa:            ;XREF[1,0]:   cefe
 STA         PPU_DATA
 DEY
 BPL         LOOP_PPUDATA_cefa
-JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
+JSR         LAB_PPUMASK_PPUSCROLL_c906              ; Set PPU_ADDR to #2000, PPU_SCROLL to 0, PPU_MASK enabling sprites and background
 JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 LDA         #$2
 JSR         FUN_f48e                                ;undefined FUN_f48e()
@@ -1905,7 +1906,7 @@ STA         $0071                            ;= ??
 LOOP_cf3a:                    ;XREF[1,0]:   cf4b
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 JSR         LAB_PPUCTRL_ca38                        ;undefined LAB_PPUCTRL_ca38()
-JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
+JSR         LAB_PPUMASK_PPUSCROLL_c906              ; Set PPU_ADDR to #2000, PPU_SCROLL to 0, PPU_MASK enabling sprites and background
 JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 JSR         FUN_ff14                                ;undefined FUN_ff14()
 LDA         VAR_MusicNumber
@@ -1943,7 +1944,7 @@ STA         $00a4                            ;= ??
 LOOP_cf83:                    ;XREF[5,0]:   cfa3,cfa9,cfaf,cfb5,cfb9
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 JSR         LAB_PPUCTRL_ca38                        ;undefined LAB_PPUCTRL_ca38()
-JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
+JSR         LAB_PPUMASK_PPUSCROLL_c906              ; Set PPU_ADDR to #2000, PPU_SCROLL to 0, PPU_MASK enabling sprites and background
 JSR         FUN_e957                                ;undefined FUN_e957()
 JSR         FUN_cc75                                ;undefined FUN_cc75()
 JSR         FUN_d11b                                ;undefined FUN_d11b()
@@ -2095,7 +2096,7 @@ DEY
 BPL         LOOP_PPUDATA_d0ad
 LDA         $00b3                            ;= ??
 STA         PPU_DATA
-JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
+JSR         LAB_PPUMASK_PPUSCROLL_c906              ; Set PPU_ADDR to #2000, PPU_SCROLL to 0, PPU_MASK enabling sprites and background
 JSR         LAB_APU_MASTERCTRL_REG_f46e             ;undefined LAB_APU_MASTERCTRL_REG_f46e()
 LDA         #$1
 JSR         FUN_f48e                                ;undefined FUN_f48e()
@@ -2115,7 +2116,7 @@ STA         $00a4                            ;= ??
 LOOP_d0d6:                    ;XREF[1,0]:   d0e7
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 JSR         LAB_PPUCTRL_ca38                        ;undefined LAB_PPUCTRL_ca38()
-JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
+JSR         LAB_PPUMASK_PPUSCROLL_c906              ; Set PPU_ADDR to #2000, PPU_SCROLL to 0, PPU_MASK enabling sprites and background
 JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 JSR         FUN_ff14                                ;undefined FUN_ff14()
 DEC         $00a4                            ;= ??
@@ -4056,7 +4057,7 @@ JSR         FUN_e981                                ;undefined FUN_e981()
 JSR         FUN_e981                                ;undefined FUN_e981()
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 JSR         FUN_e824                                ; FUN_e824() - Draw highscore and set color based on skill level selected
-JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
+JSR         LAB_PPUMASK_PPUSCROLL_c906              ; Set PPU_ADDR to #2000, PPU_SCROLL to 0, PPU_MASK enabling sprites and background
 JSR         LAB_JOYPAD_PORT2_f505                   ;undefined LAB_JOYPAD_PORT2_f505()
 LDA         Var_SelectedSkillLevel
 ASL         A
@@ -4216,6 +4217,7 @@ RTS
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
+; Pseudo Random Number Generator
 FUN_e96b:
 ASL         $002e                            ;= ??
 ROL         $002f                            ;= ??
@@ -4234,6 +4236,7 @@ RTS
 ;************************************************************************************************
 ;*                                           FUNCTION                                           *
 ;************************************************************************************************
+; Pseudo Random Number Generator
 FUN_e981:
 ASL         $0030                            ;= ??
 ROL         $0031                            ;= ??
@@ -4367,7 +4370,7 @@ LDY         #$d3
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$ff
 JSR         LAB_PPUDATA_d101                        ; LAB_PPUDATA_d101() Store the register A twice into PPU_DATA
-JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
+JSR         LAB_PPUMASK_PPUSCROLL_c906              ; Set PPU_ADDR to #2000, PPU_SCROLL to 0, PPU_MASK enabling sprites and background
 LDA         #$fd
 LDY         #$0
 JSR         FUN_f088                                ;undefined FUN_f088()
@@ -4465,7 +4468,7 @@ LDY         #$d3
 JSR         LAB_PPUADDR_e964        ; Set PPU_ADDR using registers A and Y
 LDA         #$55
 JSR         LAB_PPUDATA_d101                        ; LAB_PPUDATA_d101() Store the register A twice into PPU_DATA
-JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
+JSR         LAB_PPUMASK_PPUSCROLL_c906              ; Set PPU_ADDR to #2000, PPU_SCROLL to 0, PPU_MASK enabling sprites and background
 LDY         #$0
 JSR         FUN_ff08                                ; FUN_ff08() - Run a loop to decrement Y until it reaches 0
 JSR         FUN_ff14                                ;undefined FUN_ff14()
@@ -4484,7 +4487,7 @@ STA         $00a4                            ;= ??
 LOOP_eb5e:                    ;XREF[1,0]:   eb9c
 JSR         FUN_c91b                                ;undefined FUN_c91b()
 JSR         LAB_PPUCTRL_ca38                        ;undefined LAB_PPUCTRL_ca38()
-JSR         LAB_PPUMASK_PPUSCROLL_c906              ;undefined LAB_PPUMASK_PPUSCROLL_c906()
+JSR         LAB_PPUMASK_PPUSCROLL_c906              ; Set PPU_ADDR to #2000, PPU_SCROLL to 0, PPU_MASK enabling sprites and background
 LDA         #$0
 JSR         FUN_f48e                                ;undefined FUN_f48e()
 LDA         $006d                            ;= ??
@@ -4988,7 +4991,7 @@ LAB_APU_MASTERCTRL_REG_f46e:
 ;XREF[4,0]:   c041,d0be,e611,ea9a
 LDX         #$0
 STX         APU_DELTA_REG
-STX         $00bc                            ;= ??
+STX         VAR_MusicNoteDuration
 DEX                                          ; X = FF
 STX         VAR_MusicNumber
 STX         $00bd                            ;= ??
@@ -5035,12 +5038,12 @@ STA         $00c2                            ;= ??
 LDA         #$10
 STA         $00bb                            ;= ??
 LDA         #$1
-STA         $00bc                            ;= ??
+STA         VAR_MusicNoteDuration
 RTS
 LAB_APU_SND_SQUARE1_REG_APU_SND_SQUAR:;XREF[1,0]:   f48f
 STX         VAR_MusicNumber
 INX
-STX         $00bc                            ;= ??
+STX         VAR_MusicNoteDuration
 STX         $00bd                            ;= ??
 LDA         #$30
 STA         APU_SND_SQUARE1
@@ -5068,7 +5071,7 @@ LDA         #$c0
 STA         JOYPAD_PORT2                     ; Configure APU timing, not controller input, select  5-steps, disable frame IRQ
 LDA         VAR_MusicNumber
 BEQ         LAB_f52d
-LDX         $00bc                            ;= ??
+LDX         VAR_MusicNoteDuration
 BNE         LAB_f530
 CMP         #$8
 BNE         LAB_f520
@@ -5088,7 +5091,7 @@ STX         $00c2                            ;= ??
 LAB_f52d:                     ;XREF[2,0]:   f50c,f528
 JMP         FUN_fae8                                ;undefined FUN_fae8()
 LAB_f530:                     ;XREF[1,0]:   f510
-DEC         $00bc                            ;= ??
+DEC         VAR_MusicNoteDuration
 BEQ         LOOP_f53d
 JMP         FUN_fae8                                ;undefined FUN_fae8()
 ;************************************************************************************************
@@ -5129,7 +5132,7 @@ LDA         ($00b9),Y                        ;= ??
 AND         #$20
 BNE         LAB_APU_SND_SQUARE1_REG_f584
 LDA         ($00b9),Y                        ;= ??
-STA         $00bc                            ;= ??
+STA         VAR_MusicNoteDuration
 JSR         FUN_f57d                                ;undefined FUN_f57d()
 JMP         FUN_fae8                                ;undefined FUN_fae8()
 ;************************************************************************************************
@@ -5161,14 +5164,10 @@ BNE         LAB_f5be
 LDX         #$8
 LOOP_f5a5:                    ;XREF[1,0]:   f5b9
 LDA         #$0
-; FWD[2,0]:   4006,400a
 STA         $4002,X
-; FWD[2,0]:   01c6,01ca
 STA         $1c2,X
-; FWD[2,0]:   4007,400b
 STA         $4003,X
 LDA         #$ff
-; FWD[2,0]:   01c7,01cb
 STA         $1c3,X
 DEX
 DEX
